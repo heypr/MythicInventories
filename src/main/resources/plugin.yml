@@ -1,0 +1,23 @@
+name: MythicInventories
+version: '${version}'
+main: me.hyper.mythicinventories.MythicInventories
+api-version: '1.20'
+depend:
+  - MythicMobs
+commands:
+  mythicinventoryopen:
+    description: Open a MythicInventory
+    usage: /mythicinventoryopen <inventory>
+    permission: mythicinventories.open
+    aliases:
+      - mio
+      - miopen
+      - mythicio
+  mythicinventoryreload:
+    description: Reload MythicInventories
+    usage: /mythicinventoryreload
+    permission: mythicinventories.reload
+    aliases:
+      - mir
+      - mireload
+      - mythicireload
