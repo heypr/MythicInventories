@@ -10,20 +10,12 @@ public class MythicInventory implements org.bukkit.inventory.InventoryHolder {
 
     private final Inventory inventory;
 
-    public MythicInventory(MythicInventories plugin, Component name, int size) {
-        this.inventory = plugin.getServer().createInventory(this, size, name);
-    }
-
-    public MythicInventory(MythicInventories plugin, Component name) {
-        this(plugin, name, 9);
+    public MythicInventory(MythicInventories plugin, int size, Component title) {
+        this.inventory = plugin.getServer().createInventory(this, size, title);
     }
 
     public MythicInventory(MythicInventory inventory) {
         this.inventory = inventory.getInventory();
-    }
-
-    public MythicInventory(Inventory inventory) {
-        this.inventory = inventory;
     }
 
     @NotNull

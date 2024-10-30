@@ -1,6 +1,7 @@
 name: MythicInventories
 version: '${version}'
 main: me.hyper.mythicinventories.MythicInventories
+author: heypr
 api-version: '1.20'
 depend:
   - MythicMobs
