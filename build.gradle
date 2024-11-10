@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+    id 'com.gradleup.shadow' version '8.3.5'
 }
 
 group = 'me.hyper'
@@ -54,15 +55,8 @@ processResources {
     }
 }
 
-tasks.register("shadeJar", Jar) {
+tasks.shadowJar {
     archiveClassifier.set("shaded")
-    from(sourceSets.main.output)
-    configurations.runtimeClasspath.get().forEach { file ->
-        from(zipTree(file.absoluteFile)) {
-            exclude "META-INF/*.SF", "META-INF/*.DSA", "META-INF/*.RSA"
-        }
-    }
-    dependencies {
-        exclude(group = "org.bstats")
-    }
+    relocate("org.bstats", "me.hyper.bstats")
+    minimize()
 }
