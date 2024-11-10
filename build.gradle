@@ -22,8 +22,9 @@ repositories {
 
 dependencies {
     compileOnly "io.papermc.paper:paper-api:1.20.6-R0.1-SNAPSHOT"
-    implementation "net.kyori:adventure-text-minimessage:4.17.0"
     compileOnly 'io.lumine:Mythic-Dist:5.6.2'
+    implementation "net.kyori:adventure-text-minimessage:4.17.0"
+    implementation "org.bstats:bstats-bukkit:3.0.2"
 }
 
 def targetJavaVersion = 21
@@ -50,5 +51,18 @@ processResources {
     filteringCharset 'UTF-8'
     filesMatching('plugin.yml') {
         expand props
+    }
+}
+
+tasks.register("shadeJar", Jar) {
+    archiveClassifier.set("shaded")
+    from(sourceSets.main.output)
+    configurations.runtimeClasspath.get().forEach { file ->
+        from(zipTree(file.absoluteFile)) {
+            exclude "META-INF/*.SF", "META-INF/*.DSA", "META-INF/*.RSA"
+        }
+    }
+    dependencies {
+        exclude(group = "org.bstats")
     }
 }

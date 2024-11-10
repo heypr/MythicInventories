@@ -5,6 +5,7 @@ import me.hyper.mythicinventories.commands.OpenInventoryTabCompleter;
 import me.hyper.mythicinventories.events.InventoryEvents;
 import me.hyper.mythicinventories.inventories.InventoryCreator;
 import me.hyper.mythicinventories.inventories.MythicInventory;
+import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -33,6 +34,7 @@ public final class MythicInventories extends JavaPlugin {
 
         createInventoriesDirectory();
         reloadInventories();
+        new Metrics(this, 23863);
 
         getLogger().info("MythicInventories enabled!");
     }
