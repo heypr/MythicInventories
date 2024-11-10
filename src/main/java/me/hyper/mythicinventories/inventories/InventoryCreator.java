@@ -3,9 +3,11 @@ package me.hyper.mythicinventories.inventories;
 import io.lumine.mythic.bukkit.MythicBukkit;
 import me.hyper.mythicinventories.MythicInventories;
 import me.hyper.mythicinventories.misc.ClickTypes;
-import me.hyper.mythicinventories.misc.Utility;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.TextDecoration;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.configuration.ConfigurationSection;
@@ -67,7 +69,7 @@ public class InventoryCreator {
                         continue;
                     }
 
-                    MythicInventory inventory = new MythicInventory(plugin, size, Utility.deserializeText(displayName));
+                    MythicInventory inventory = new MythicInventory(plugin, size, deserializeText(displayName));
                     List<Map<?, ?>> items = inventorySection.getMapList("items");
 
                     boolean fillItemExists = false;
@@ -139,7 +141,7 @@ public class InventoryCreator {
                             }
 
                             if (itemData.containsKey("name")) {
-                                meta.displayName(Utility.deserializeText(itemData.get("name").toString()).asComponent().decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE));
+                                meta.displayName(deserializeText(itemData.get("name").toString()).asComponent().decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE));
                             }
 
                             if (itemData.containsKey("lore")) {
@@ -150,7 +152,7 @@ public class InventoryCreator {
                                 }
                                 List<Component> lore = loreList.stream()
                                         .filter(line -> line instanceof String)
-                                        .map(line -> Utility.deserializeText(line.toString()).asComponent().decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE))
+                                        .map(line -> deserializeText(line.toString()).asComponent().decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE))
                                         .toList();
                                 meta.lore(new ArrayList<>(lore));
                             }
@@ -240,5 +242,11 @@ public class InventoryCreator {
                 plugin.getLogger().severe("Error processing file " + file.getName() + ": " + e.getMessage());
             }
         }
+    }
+
+    private TextComponent deserializeText(String text) {
+        LegacyComponentSerializer legacy = LegacyComponentSerializer.legacyAmpersand();
+        MiniMessage mm = MiniMessage.miniMessage();
+        return legacy.deserialize(legacy.serialize(mm.deserialize(text).asComponent()));
     }
 }

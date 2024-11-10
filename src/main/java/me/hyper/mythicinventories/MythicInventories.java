@@ -31,8 +31,6 @@ public final class MythicInventories extends JavaPlugin {
 
         Bukkit.getPluginManager().registerEvents(new InventoryEvents(this), this);
 
-        saveDefaultConfig();
-
         createInventoriesDirectory();
         reloadInventories();
 
