@@ -24,20 +24,30 @@ public class OpenInventoryCommand implements CommandExecutor {
         }
 
         if (args.length == 0) {
-            player.sendMessage("Usage: /inventory <name>");
+            player.sendMessage("Usage: /miopen <name> [player]");
             return true;
         }
 
         String inventoryName = args[0];
-
         if (!plugin.getInventories().containsKey(inventoryName)) {
             player.sendMessage("No such inventory: " + inventoryName);
             return true;
         }
 
-        MythicInventory trueInventory = new MythicInventory(plugin.getInventories().get(inventoryName));
-        player.openInventory(trueInventory.getInventory());
+        if (!player.hasPermission("mythicinventories.open." + inventoryName)) {
+            player.sendMessage("No permission.");
+            return true;
+        }
 
+        MythicInventory mythicInventory = new MythicInventory(plugin.getInventories().get(inventoryName));
+        Player target = args.length > 1 ? plugin.getServer().getPlayer(args[1]) : player;
+
+        if (target == null) {
+            player.sendMessage("User either does not exist or is not online.");
+            return true;
+        }
+
+        target.openInventory(mythicInventory.getInventory());
         return true;
     }
 }
