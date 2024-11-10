@@ -193,21 +193,22 @@ public class InventoryCreator {
                                 }
                             }
 
-                            if (itemData.containsKey("commands")) {
-                                List<?> commandsList = itemData.get("commands") instanceof List ? (List<?>) itemData.get("commands") : null;
-                                if (commandsList == null) {
-                                    plugin.getLogger().severe("Invalid commands format/options in inventory \"" + inventoryId + "\" with item type " + material + "!");
-                                    continue;
-                                }
-                                for (Object command : commandsList) {
-                                    if (command instanceof String) {
-                                        meta.getPersistentDataContainer().set(new NamespacedKey(plugin, "commands"), PersistentDataType.STRING, command.toString());
-                                    }
-                                    else {
-                                        plugin.getLogger().severe("Invalid command \"" + command + "\" in inventory \"" + inventoryId + "\"" + "!");
-                                    }
-                                }
-                            }
+                            // TODO: Implement commands
+                            //if (itemData.containsKey("commands")) {
+                            //    List<?> commandsList = itemData.get("commands") instanceof List ? (List<?>) itemData.get("commands") : null;
+                            //    if (commandsList == null) {
+                            //        plugin.getLogger().severe("Invalid commands format/options in inventory \"" + inventoryId + "\" with item type " + material + "!");
+                            //        continue;
+                            //    }
+                            //    for (Object command : commandsList) {
+                            //        if (command instanceof String) {
+                            //            meta.getPersistentDataContainer().set(new NamespacedKey(plugin, "commands"), PersistentDataType.STRING, command.toString());
+                            //        }
+                            //        else {
+                            //            plugin.getLogger().severe("Invalid command \"" + command + "\" in inventory \"" + inventoryId + "\"" + "!");
+                            //        }
+                            //    }
+                            //}
 
                             item.setItemMeta(meta);
 
