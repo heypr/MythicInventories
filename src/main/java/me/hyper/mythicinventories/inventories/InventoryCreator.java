@@ -131,13 +131,12 @@ public class InventoryCreator {
 
                             if (itemData.containsKey("amount")) {
                                 Object amountObj = itemData.get("amount");
-                                if (amountObj instanceof Integer && (Integer) amountObj > 0) {
-                                    item.setAmount((Integer) amountObj);
-                                }
-                                else {
+                                if (!(amountObj instanceof Integer && (Integer) amountObj > 0)) {
                                     plugin.getLogger().severe("Invalid amount value \"" + amountObj + "\" in inventory \"" + inventoryId + "\"!");
                                     continue;
                                 }
+
+                                item.setAmount((Integer) amountObj);
                             }
 
                             if (itemData.containsKey("name")) {
