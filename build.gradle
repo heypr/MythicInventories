@@ -1,10 +1,9 @@
 plugins {
     id 'java'
-    id 'com.gradleup.shadow' version '8.3.5'
 }
 
 group = 'me.hyper'
-version = '0.5.0-SNAPSHOT'
+version = '0.5.1-SNAPSHOT'
 
 repositories {
     mavenCentral()
@@ -53,10 +52,4 @@ processResources {
     filesMatching('plugin.yml') {
         expand props
     }
-}
-
-tasks.shadowJar {
-    archiveClassifier.set("shaded")
-    relocate("org.bstats", "me.hyper.bstats")
-    minimize()
 }
