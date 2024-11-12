@@ -1,11 +1,11 @@
-package me.hyper.mythicinventories;
+package dev.heypr.mythicinventories;
 
-import me.hyper.mythicinventories.bstats.Metrics;
-import me.hyper.mythicinventories.commands.OpenInventoryCommand;
-import me.hyper.mythicinventories.commands.OpenInventoryTabCompleter;
-import me.hyper.mythicinventories.events.InventoryEvents;
-import me.hyper.mythicinventories.inventories.InventoryCreator;
-import me.hyper.mythicinventories.inventories.MythicInventory;
+import dev.heypr.mythicinventories.bstats.Metrics;
+import dev.heypr.mythicinventories.commands.OpenInventoryTabCompleter;
+import dev.heypr.mythicinventories.events.InventoryEvents;
+import dev.heypr.mythicinventories.inventories.InventoryCreator;
+import dev.heypr.mythicinventories.inventories.MythicInventory;
+import dev.heypr.mythicinventories.commands.OpenInventoryCommand;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 

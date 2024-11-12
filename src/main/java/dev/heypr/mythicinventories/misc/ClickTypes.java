@@ -1,4 +1,4 @@
-package me.hyper.mythicinventories.misc;
+package dev.heypr.mythicinventories.misc;
 
 public enum ClickTypes {
     LEFT_CLICK,

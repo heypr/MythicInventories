@@ -1,8 +1,8 @@
-package me.hyper.mythicinventories.events;
+package dev.heypr.mythicinventories.events;
 
 import io.lumine.mythic.bukkit.MythicBukkit;
-import me.hyper.mythicinventories.MythicInventories;
-import me.hyper.mythicinventories.inventories.MythicInventory;
+import dev.heypr.mythicinventories.MythicInventories;
+import dev.heypr.mythicinventories.inventories.MythicInventory;
 import org.bukkit.NamespacedKey;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -51,7 +51,7 @@ public class InventoryEvents implements Listener {
         }
     }
 
-    public void castSkill(InventoryDragEvent event, ItemStack item) {
+    private void castSkill(InventoryDragEvent event, ItemStack item) {
         NamespacedKey key = new NamespacedKey(plugin, "skill");
         if (!item.getItemMeta().getPersistentDataContainer().has(key, PersistentDataType.STRING)) {
             return;
@@ -63,7 +63,7 @@ public class InventoryEvents implements Listener {
         MythicBukkit.inst().getAPIHelper().castSkill(event.getWhoClicked(), skillName);
     }
 
-    public void castSkill(InventoryClickEvent event, ItemStack item) {
+    private void castSkill(InventoryClickEvent event, ItemStack item) {
         NamespacedKey key = new NamespacedKey(plugin, "skill");
         if (!item.getItemMeta().getPersistentDataContainer().has(key, PersistentDataType.STRING)) {
             return;
@@ -75,7 +75,7 @@ public class InventoryEvents implements Listener {
         MythicBukkit.inst().getAPIHelper().castSkill(event.getWhoClicked(), skillName);
     }
 
-    public void checkClickType(InventoryClickEvent event, ItemStack item) {
+    private void checkClickType(InventoryClickEvent event, ItemStack item) {
         NamespacedKey key = new NamespacedKey(plugin, "click_type");
         if (!item.getItemMeta().getPersistentDataContainer().has(key, PersistentDataType.STRING)) {
             return;
@@ -136,7 +136,7 @@ public class InventoryEvents implements Listener {
         }
     }
 
-    public void checkDragType(InventoryDragEvent event, ItemStack item) {
+    private void checkDragType(InventoryDragEvent event, ItemStack item) {
         NamespacedKey key = new NamespacedKey(plugin, "click_type");
         if (item.getItemMeta().getPersistentDataContainer().has(key, PersistentDataType.STRING)) {
             String clickType = item.getItemMeta().getPersistentDataContainer().get(key, PersistentDataType.STRING);
@@ -159,7 +159,7 @@ public class InventoryEvents implements Listener {
         }
     }
 
-    public void runCommands(ItemStack item) {
+    private void runCommands(ItemStack item) {
         NamespacedKey key = new NamespacedKey(plugin, "commands");
         if (!item.getItemMeta().getPersistentDataContainer().has(key, PersistentDataType.STRING)) {
             return;
@@ -179,5 +179,16 @@ public class InventoryEvents implements Listener {
                 plugin.getLogger().warning("Error running command: " + command);
             }
         }
+    }
+
+    private boolean isInteractable(ItemStack item) {
+        NamespacedKey key = new NamespacedKey(plugin, "interactable");
+        if (!item.getItemMeta().getPersistentDataContainer().has(key, PersistentDataType.BOOLEAN)) {
+            return false;
+        }
+        if (item.getItemMeta().getPersistentDataContainer().get(key, PersistentDataType.BOOLEAN) == null) {
+            return false;
+        }
+        return item.getItemMeta().getPersistentDataContainer().get(key, PersistentDataType.BOOLEAN);
     }
 }

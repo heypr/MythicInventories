@@ -1,6 +1,6 @@
-package me.hyper.mythicinventories.commands;
+package dev.heypr.mythicinventories.commands;
 
-import me.hyper.mythicinventories.MythicInventories;
+import dev.heypr.mythicinventories.MythicInventories;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;

@@ -1,6 +1,6 @@
-package me.hyper.mythicinventories.inventories;
+package dev.heypr.mythicinventories.inventories;
 
-import me.hyper.mythicinventories.MythicInventories;
+import dev.heypr.mythicinventories.MythicInventories;
 import net.kyori.adventure.text.Component;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;

@@ -1,7 +1,7 @@
-package me.hyper.mythicinventories.commands;
+package dev.heypr.mythicinventories.commands;
 
-import me.hyper.mythicinventories.MythicInventories;
-import me.hyper.mythicinventories.inventories.MythicInventory;
+import dev.heypr.mythicinventories.MythicInventories;
+import dev.heypr.mythicinventories.inventories.MythicInventory;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;

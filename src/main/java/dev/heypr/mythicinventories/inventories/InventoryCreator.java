@@ -1,8 +1,8 @@
-package me.hyper.mythicinventories.inventories;
+package dev.heypr.mythicinventories.inventories;
 
 import io.lumine.mythic.bukkit.MythicBukkit;
-import me.hyper.mythicinventories.MythicInventories;
-import me.hyper.mythicinventories.misc.ClickTypes;
+import dev.heypr.mythicinventories.MythicInventories;
+import dev.heypr.mythicinventories.misc.ClickTypes;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -130,13 +130,13 @@ public class InventoryCreator {
                             ItemMeta meta = item.getItemMeta();
 
                             if (itemData.containsKey("amount")) {
-                                Object amountObj = itemData.get("amount");
-                                if (!(amountObj instanceof Integer && (Integer) amountObj > 0)) {
-                                    plugin.getLogger().severe("Invalid amount value \"" + amountObj + "\" in inventory \"" + inventoryId + "\"!");
+                                Integer amount = (Integer) itemData.get("amount");
+                                if (!(amount != null && amount > 0)) {
+                                    plugin.getLogger().severe("Invalid amount value \"" + amount + "\" in inventory \"" + inventoryId + "\"!");
                                     continue;
                                 }
 
-                                item.setAmount((Integer) amountObj);
+                                item.setAmount(amount);
                             }
 
                             if (itemData.containsKey("name")) {
@@ -190,6 +190,16 @@ public class InventoryCreator {
                                         plugin.getLogger().severe("Invalid item flag \"" + flag + "\" in inventory \"" + inventoryId + "\"" + "!");
                                     }
                                 }
+                            }
+
+                            if (itemData.containsKey("interactable")) {
+                                Boolean interactable = (Boolean) itemData.get("interactable");
+                                if (interactable == null) {
+                                    plugin.getLogger().severe("Invalid interactable value \"" + interactable + "\" in inventory \"" + inventoryId + "\"!");
+                                    continue;
+                                }
+                                NamespacedKey key = new NamespacedKey(plugin, "interactable");
+                                meta.getPersistentDataContainer().set(key, PersistentDataType.BOOLEAN, interactable);
                             }
 
                             // TODO: Implement commands
