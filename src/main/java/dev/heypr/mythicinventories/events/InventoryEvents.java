@@ -30,7 +30,7 @@ public class InventoryEvents implements Listener {
         if (event.getCurrentItem() instanceof ItemStack item) {
             event.setCancelled(true);
             checkClickType(event, item);
-            runCommands(item);
+//            runCommands(item);
         }
     }
 
@@ -41,13 +41,13 @@ public class InventoryEvents implements Listener {
         if (event.getCursor() instanceof ItemStack item) {
             event.setCancelled(true);
             checkDragType(event, item);
-            runCommands(item);
+//            runCommands(item);
         }
 
         if (event.getOldCursor() instanceof ItemStack item) {
             event.setCancelled(true);
             checkDragType(event, item);
-            runCommands(item);
+//            runCommands(item);
         }
     }
 
@@ -158,37 +158,33 @@ public class InventoryEvents implements Listener {
             }
         }
     }
-
-    private void runCommands(ItemStack item) {
-        NamespacedKey key = new NamespacedKey(plugin, "commands");
-        if (!item.getItemMeta().getPersistentDataContainer().has(key, PersistentDataType.STRING)) {
-            return;
-        }
-
-        String commands = item.getItemMeta().getPersistentDataContainer().get(key, PersistentDataType.STRING);
-        if (commands == null) {
-            return;
-        }
-
-        String[] commandList = commands.split(";");
-        for (String command : commandList) {
-            try {
-                plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), command);
-            }
-            catch (Exception e) {
-                plugin.getLogger().warning("Error running command: " + command);
-            }
-        }
-    }
+    
+// TODO: fix this shit
+//    private void runCommands(ItemStack item) {
+//        NamespacedKey key = new NamespacedKey(plugin, "commands");
+//        if (!item.getItemMeta().getPersistentDataContainer().has(key, PersistentDataType.STRING)) {
+//            return;
+//        }
+//
+//        String commands = item.getItemMeta().getPersistentDataContainer().get(key, PersistentDataType.STRING);
+//
+//        if (commands == null) {
+//            return;
+//        }
+//
+//        String[] commandList = commands.split(";");
+//        for (String command : commandList) {
+//            try {
+//                plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), command);
+//            }
+//            catch (Exception e) {
+//                plugin.getLogger().warning("Error running command: " + command);
+//            }
+//        }
+//    }
 
     private boolean isInteractable(ItemStack item) {
         NamespacedKey key = new NamespacedKey(plugin, "interactable");
-        if (!item.getItemMeta().getPersistentDataContainer().has(key, PersistentDataType.BOOLEAN)) {
-            return false;
-        }
-        if (item.getItemMeta().getPersistentDataContainer().get(key, PersistentDataType.BOOLEAN) == null) {
-            return false;
-        }
-        return item.getItemMeta().getPersistentDataContainer().get(key, PersistentDataType.BOOLEAN);
+        return item.getItemMeta().getPersistentDataContainer().getOrDefault(key, PersistentDataType.BOOLEAN, false);
     }
 }
