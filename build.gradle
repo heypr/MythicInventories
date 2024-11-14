@@ -3,7 +3,11 @@ plugins {
 }
 
 group = 'me.hyper'
-version = '0.5.1-SNAPSHOT'
+version = '0.5.3-b' + buildNumber() + '-DEV'
+
+def buildNumber() {
+    System.getenv("BUILD_NUMBER") ?: "UNKNOWN"
+}
 
 repositories {
     mavenCentral()
@@ -51,5 +55,11 @@ processResources {
     filteringCharset 'UTF-8'
     filesMatching('plugin.yml') {
         expand props
+    }
+}
+
+tasks.processResources {
+    filesMatching("plugin.yml") {
+        expand(BUILD_NUMBER: System.getenv("BUILD_NUMBER"))
     }
 }
