@@ -7,6 +7,9 @@ A simple way to go about generating inventories for MythicMobs.
 ## Download
 You can download the latest version of MythicInventories [here](https://ci.heypr.dev/job/MythicInventories/).
 
+## Support
+If you're having difficulty figuring out how to work with the plugin, [join my support Discord](https://discord.gg/Drgk3CxrtV/)!
+
 ## Usage
 Making inventories is pretty simple. All you need to do is open up the MythicInventories folder, create a .yml file with a name of your choice, then create one! 
 > [!NOTE]
