@@ -7,6 +7,9 @@ A simple way to go about generating inventories for MythicMobs.
 ## Download
 You can download the latest version of MythicInventories [here](https://ci.heypr.dev/job/MythicInventories/).
 
+## Support
+If you're having difficulty figuring out how to work with the plugin, [join my support Discord](https://discord.gg/Drgk3CxrtV/)!
+
 ## Usage
 Making inventories is pretty simple. All you need to do is open up the MythicInventories folder, create a .yml file with a name of your choice, then create one! 
 > [!NOTE]
@@ -31,7 +34,13 @@ my_first_inventory:
       click_type: shift_left_click
 ```
 
+## Options
+
+The "gui" option is for setting whether all items in the inventory are able to be picked up and manipulated. It is `true` (all items are *not* interactable) by default.
+
 The "fill_item" option is for items that need to fill the inventory. It is `false` by default.
+
+The "interactable" option is for setting whether the item is able to be picked up and manipulated. It is `false` by default.
 
 The "click_type" option is for setting the click type for the item. It is not set by default.
 Make sure to set this value to a valid click type if you want a skill to be executed when the item is clicked.
