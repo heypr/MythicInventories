@@ -1,8 +1,8 @@
 package dev.heypr.mythicinventories.inventories;
 
-import io.lumine.mythic.bukkit.MythicBukkit;
 import dev.heypr.mythicinventories.MythicInventories;
 import dev.heypr.mythicinventories.misc.ClickTypes;
+import io.lumine.mythic.bukkit.MythicBukkit;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -20,7 +20,6 @@ import org.bukkit.persistence.PersistentDataType;
 import org.yaml.snakeyaml.error.MarkedYAMLException;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +28,7 @@ import java.util.logging.Level;
 public class InventoryCreator {
 
     private final MythicInventories plugin;
+    private String inventoryId;
 
     public InventoryCreator(MythicInventories plugin) {
         this.plugin = plugin;
@@ -76,29 +76,25 @@ public class InventoryCreator {
 
                     for (Map<?, ?> itemData : items) {
 
+                        this.inventoryId = inventoryId;
+
                         try {
                             int slot = 0;
                             boolean fillItem = false;
+
                             if (itemData.containsKey("slot")) {
-                                Object slotObj = itemData.get("slot");
-                                if (slotObj instanceof Integer) {
-                                    slot = (Integer) slotObj;
-                                }
-                                else {
-                                    plugin.getLogger().severe("Invalid slot value \"" + slotObj + "\" in inventory \"" + inventoryId + "\"!");
+                                int fl = getSlot(itemData);
+                                if (fl == 0) {
                                     continue;
                                 }
+                                slot = getSlot(itemData);
                             }
 
                             if (itemData.containsKey("fill_item")) {
-                                Object fillItemObj = itemData.get("fill_item");
-                                if (fillItemObj instanceof Boolean) {
-                                    fillItem = (Boolean) fillItemObj;
-                                }
-                                else {
-                                    plugin.getLogger().severe("Invalid fill_item value \"" + fillItemObj + "\" in inventory \"" + inventoryId + "\"!");
+                                if (!hasFillItem(itemData)) {
                                     continue;
                                 }
+                                fillItem = hasFillItem(itemData);
                             }
 
                             if (slot == 0 && !fillItem) {
@@ -119,6 +115,7 @@ public class InventoryCreator {
                             }
 
                             Material material;
+
                             try {
                                 material = Material.valueOf(itemData.get("type").toString().toUpperCase());
                             }
@@ -126,16 +123,15 @@ public class InventoryCreator {
                                 plugin.getLogger().severe("Invalid material type \"" + itemData.get("type") + "\" in inventory \"" + inventoryId + "\"!");
                                 continue;
                             }
+
                             ItemStack item = new ItemStack(material);
                             ItemMeta meta = item.getItemMeta();
 
                             if (itemData.containsKey("amount")) {
-                                Integer amount = (Integer) itemData.get("amount");
-                                if (!(amount != null && amount > 0)) {
-                                    plugin.getLogger().severe("Invalid amount value \"" + amount + "\" in inventory \"" + inventoryId + "\"!");
+                                int amount = getAmount(itemData);
+                                if (amount == 0) {
                                     continue;
                                 }
-
                                 item.setAmount(amount);
                             }
 
@@ -144,62 +140,35 @@ public class InventoryCreator {
                             }
 
                             if (itemData.containsKey("lore")) {
-                                List<?> loreList = itemData.get("lore") instanceof List ? (List<?>) itemData.get("lore") : null;
-                                if (loreList == null) {
-                                    plugin.getLogger().severe("Invalid lore format in inventory \"" + inventoryId + "\"!");
+                                List<Component> lore = getLore(itemData);
+                                if (lore == null) {
                                     continue;
                                 }
-                                List<Component> lore = loreList.stream()
-                                        .filter(line -> line instanceof String)
-                                        .map(line -> deserializeText(line.toString()).asComponent().decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE))
-                                        .toList();
-                                meta.lore(new ArrayList<>(lore));
+                                meta.lore(lore);
                             }
 
                             if (itemData.containsKey("mm_skill")) {
-                                String skillName = itemData.get("mm_skill").toString();
-                                if (MythicBukkit.inst().getSkillManager().getSkill(skillName).isEmpty()) {
-                                    plugin.getLogger().severe("Invalid skill name \"" + skillName + "\" in inventory \"" + inventoryId + "\"!");
+                                if (!handleMMSkill(itemData, meta)) {
                                     continue;
                                 }
-                                NamespacedKey key = new NamespacedKey(plugin, "skill");
-                                meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, skillName);
                             }
 
                             if (itemData.containsKey("click_type")) {
-                                String clickType = itemData.get("click_type").toString().toUpperCase();
-                                if (Arrays.stream(ClickTypes.values()).noneMatch(type -> type.name().equals(clickType))) {
-                                    plugin.getLogger().severe("Invalid click type \"" + clickType + "\" in inventory \"" + inventoryId + "\"!");
+                                if (!handleClickType(itemData, meta)) {
                                     continue;
                                 }
-                                NamespacedKey key = new NamespacedKey(plugin, "click_type");
-                                meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, clickType);
                             }
 
                             if (itemData.containsKey("item_flags")) {
-                                List<?> itemFlagList = itemData.get("item_flags") instanceof List ? (List<?>) itemData.get("item_flags") : null;
-                                if (itemFlagList == null) {
-                                    plugin.getLogger().severe("Invalid item_flag format/options in inventory \"" + inventoryId + "\" with item type " + material + "!");
+                                if (!handleItemFlags(itemData, meta, item)) {
                                     continue;
-                                }
-                                for (Object flag : itemFlagList) {
-                                    try {
-                                        meta.addItemFlags(ItemFlag.valueOf(flag.toString().toUpperCase()));
-                                    }
-                                    catch (IllegalArgumentException e) {
-                                        plugin.getLogger().severe("Invalid item flag \"" + flag + "\" in inventory \"" + inventoryId + "\"" + "!");
-                                    }
                                 }
                             }
 
                             if (itemData.containsKey("interactable")) {
-                                Boolean interactable = (Boolean) itemData.get("interactable");
-                                if (interactable == null) {
-                                    plugin.getLogger().severe("Invalid interactable value \"" + interactable + "\" in inventory \"" + inventoryId + "\"!");
+                                if (!(handleIfInteractable(itemData, meta, item))) {
                                     continue;
                                 }
-                                NamespacedKey key = new NamespacedKey(plugin, "interactable");
-                                meta.getPersistentDataContainer().set(key, PersistentDataType.BOOLEAN, interactable);
                             }
 
                             // TODO: Implement commands
@@ -209,6 +178,7 @@ public class InventoryCreator {
                             //        plugin.getLogger().severe("Invalid commands format/options in inventory \"" + inventoryId + "\" with item type " + material + "!");
                             //        continue;
                             //    }
+                            //    // WHAT THE FUCK IS This
                             //    for (Object command : commandsList) {
                             //        if (command instanceof String) {
                             //            meta.getPersistentDataContainer().set(new NamespacedKey(plugin, "commands"), PersistentDataType.STRING, command.toString());
@@ -258,5 +228,101 @@ public class InventoryCreator {
         LegacyComponentSerializer legacy = LegacyComponentSerializer.legacyAmpersand();
         MiniMessage mm = MiniMessage.miniMessage();
         return legacy.deserialize(legacy.serialize(mm.deserialize(text).asComponent()));
+    }
+
+    private boolean hasFillItem(Map<?, ?> itemData) {
+        Object fillItemObj = itemData.get("fill_item");
+        if (fillItemObj instanceof Boolean) {
+            return (boolean) fillItemObj;
+        }
+        else {
+            plugin.getLogger().severe("Invalid fill_item value \"" + fillItemObj + "\" in inventory \"" + inventoryId + "\"!");
+            return false;
+        }
+    }
+
+    private int getAmount(Map<?, ?> itemData) {
+        Object amountObj = itemData.get("amount");
+        if (amountObj instanceof Integer) {
+            return (int) amountObj;
+        }
+        else {
+            plugin.getLogger().severe("Invalid amount value \"" + amountObj + "\" in inventory \"" + inventoryId + "\"!");
+            return 0;
+        }
+    }
+
+    private List<Component> getLore(Map<?, ?> itemData) {
+        List<?> loreList = itemData.get("lore") instanceof List ? (List<?>) itemData.get("lore") : null;
+        if (loreList == null) {
+            plugin.getLogger().severe("Invalid lore format in inventory \"" + inventoryId + "\"!");
+            return null;
+        }
+        return loreList.stream()
+                .filter(line -> line instanceof String)
+                .map(line -> deserializeText(line.toString()).asComponent().decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE))
+                .toList();
+    }
+
+    private boolean handleMMSkill(Map<?, ?> itemData, ItemMeta meta) {
+        String skillName = itemData.get("mm_skill").toString();
+        if (MythicBukkit.inst().getSkillManager().getSkill(skillName).isEmpty()) {
+            plugin.getLogger().severe("Invalid skill name \"" + skillName + "\" in inventory \"" + inventoryId + "\"!");
+            return false;
+        }
+        NamespacedKey key = new NamespacedKey(plugin, "skill");
+        meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, skillName);
+        return true;
+    }
+
+    private boolean handleClickType(Map<?, ?> itemData, ItemMeta meta) {
+        String clickType = itemData.get("click_type").toString().toUpperCase();
+        if (Arrays.stream(ClickTypes.values()).noneMatch(type -> type.name().equals(clickType))) {
+            plugin.getLogger().severe("Invalid click type \"" + clickType + "\" in inventory \"" + inventoryId + "\"!");
+            return false;
+        }
+        NamespacedKey key = new NamespacedKey(plugin, "click_type");
+        meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, clickType);
+        return true;
+    }
+
+    private boolean handleItemFlags(Map<?, ?> itemData, ItemMeta meta, ItemStack item) {
+        List<?> itemFlagList = itemData.get("item_flags") instanceof List ? (List<?>) itemData.get("item_flags") : null;
+        if (itemFlagList == null) {
+            plugin.getLogger().severe("Invalid item_flag format/options in inventory \"" + inventoryId + "\" with item type " + item.getType() + "!");
+            return false;
+        }
+        for (Object flag : itemFlagList) {
+            try {
+                meta.addItemFlags(ItemFlag.valueOf(flag.toString().toUpperCase()));
+            }
+            catch (IllegalArgumentException e) {
+                plugin.getLogger().severe("Invalid item flag \"" + flag + "\" in inventory \"" + inventoryId + "\"" + "!");
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean handleIfInteractable(Map<?, ?> itemData, ItemMeta meta, ItemStack item) {
+        Boolean interactable = (Boolean) itemData.get("interactable");
+        if (interactable == null) {
+            plugin.getLogger().severe("Invalid interactable value found in inventory \"" + inventoryId + "\" with item type " + item.getType() + "!");
+            return false;
+        }
+        NamespacedKey key = new NamespacedKey(plugin, "interactable");
+        meta.getPersistentDataContainer().set(key, PersistentDataType.BOOLEAN, interactable);
+        return true;
+    }
+
+    private int getSlot(Map<?, ?> itemData) {
+        Object slotObj = itemData.get("slot");
+        if (slotObj instanceof Integer) {
+            return (Integer) slotObj;
+        }
+        else {
+            plugin.getLogger().severe("Invalid slot value \"" + slotObj + "\" in inventory \"" + inventoryId + "\"!");
+            return 0;
+        }
     }
 }
