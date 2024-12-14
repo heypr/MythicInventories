@@ -15,10 +15,6 @@ public class MythicInventory implements InventoryHolder {
         this.inventory = plugin.getServer().createInventory(this, size, title);
     }
 
-    public MythicInventory(MythicInventory inventory) {
-        this.inventory = inventory.getInventory();
-    }
-
     @NotNull
     @Override
     public Inventory getInventory() {
