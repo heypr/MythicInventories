@@ -39,7 +39,7 @@ public class OpenInventoryCommand implements CommandExecutor {
             return true;
         }
 
-        MythicInventory mythicInventory = new MythicInventory(plugin.getInventories().get(inventoryName));
+        MythicInventory mythicInventory = plugin.getInventories().get(inventoryName);
         Player target = args.length > 1 ? plugin.getServer().getPlayer(args[1]) : player;
 
         if (target == null) {
