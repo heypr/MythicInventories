@@ -3,10 +3,11 @@ package dev.heypr.mythicinventories.inventories;
 import dev.heypr.mythicinventories.MythicInventories;
 import net.kyori.adventure.text.Component;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
-public class MythicInventory implements org.bukkit.inventory.InventoryHolder {
+public class MythicInventory implements InventoryHolder {
 
     private final Inventory inventory;
 

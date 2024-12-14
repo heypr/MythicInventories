@@ -6,6 +6,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
 import org.jetbrains.annotations.NotNull;
 
 public class OpenInventoryCommand implements CommandExecutor {
@@ -39,7 +40,7 @@ public class OpenInventoryCommand implements CommandExecutor {
             return true;
         }
 
-        MythicInventory mythicInventory = new MythicInventory(plugin.getInventories().get(inventoryName));
+        MythicInventory mythicInventory = plugin.getInventories().get(inventoryName);
         Player target = args.length > 1 ? plugin.getServer().getPlayer(args[1]) : player;
 
         if (target == null) {
