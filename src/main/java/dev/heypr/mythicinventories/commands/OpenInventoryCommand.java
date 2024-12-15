@@ -47,6 +47,10 @@ public class OpenInventoryCommand implements CommandExecutor {
             return true;
         }
 
+        if (plugin.getInventorySerializer().getPlayerInventoryNames(target).contains(inventoryName)) {
+            target.openInventory(plugin.getInventorySerializer().loadInventory(mythicInventory, target).getInventory());
+            return true;
+        }
         target.openInventory(mythicInventory.getInventory());
         return true;
     }

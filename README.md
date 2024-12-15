@@ -2,7 +2,7 @@
 A simple way to go about generating inventories for MythicMobs.
 
 > [!IMPORTANT]
-> The one and only dependency is MythicMobs. 
+> The one and only dependency is MythicMobs, however the plugin can be used without it (the skills will just not work).
 
 ## Download
 You can download the latest version of MythicInventories [here](https://ci.heypr.dev/job/MythicInventories/).

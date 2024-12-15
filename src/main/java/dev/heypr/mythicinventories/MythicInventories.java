@@ -6,6 +6,7 @@ import dev.heypr.mythicinventories.events.InventoryEvents;
 import dev.heypr.mythicinventories.inventories.InventoryCreator;
 import dev.heypr.mythicinventories.inventories.MythicInventory;
 import dev.heypr.mythicinventories.commands.OpenInventoryCommand;
+import dev.heypr.mythicinventories.storage.MythicInventorySerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -43,6 +44,10 @@ public final class MythicInventories extends JavaPlugin {
     public void onDisable() {
         inventories.clear();
         getLogger().info("MythicInventories disabled!");
+    }
+
+    public MythicInventorySerializer getInventorySerializer() {
+        return new MythicInventorySerializer(this);
     }
 
     public void reloadInventories() {
