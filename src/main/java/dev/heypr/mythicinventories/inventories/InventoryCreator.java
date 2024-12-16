@@ -61,7 +61,7 @@ public class InventoryCreator {
                         continue;
                     }
 
-                    String displayName = inventorySection.getString("name", inventoryId);
+                    String displayName = inventorySection.getString("name", "Container");
                     int size = inventorySection.getInt("size", 9);
 
                     if (size % 9 != 0) {
