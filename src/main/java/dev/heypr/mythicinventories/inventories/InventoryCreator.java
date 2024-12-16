@@ -2,7 +2,6 @@ package dev.heypr.mythicinventories.inventories;
 
 import dev.heypr.mythicinventories.MythicInventories;
 import dev.heypr.mythicinventories.misc.ClickTypes;
-import io.lumine.mythic.bukkit.MythicBukkit;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -29,6 +28,7 @@ public class InventoryCreator {
 
     private final MythicInventories plugin;
     private String inventoryId;
+    private Map<?, ?> itemData;
 
     public InventoryCreator(MythicInventories plugin) {
         this.plugin = plugin;
@@ -61,7 +61,7 @@ public class InventoryCreator {
                         continue;
                     }
 
-                    String displayName = inventorySection.getString("name", inventoryId);
+                    String displayName = inventorySection.getString("name", "Container");
                     int size = inventorySection.getInt("size", 9);
 
                     if (size % 9 != 0) {
@@ -70,6 +70,7 @@ public class InventoryCreator {
                     }
 
                     MythicInventory inventory = new MythicInventory(plugin, size, deserializeText(displayName));
+                    inventory.setInternalName(inventoryId);
                     List<Map<?, ?>> items = inventorySection.getMapList("items");
 
                     boolean fillItemExists = false;
@@ -77,12 +78,13 @@ public class InventoryCreator {
                     for (Map<?, ?> itemData : items) {
 
                         this.inventoryId = inventoryId;
+                        this.itemData = itemData;
 
                         try {
                             int slot = 0;
                             boolean fillItem = false;
 
-                            if (itemData.containsKey("slot")) {
+                            if (checkValue("slot")) {
                                 int fl = getSlot(itemData);
                                 if (fl == 0) {
                                     continue;
@@ -90,11 +92,11 @@ public class InventoryCreator {
                                 slot = getSlot(itemData);
                             }
 
-                            if (itemData.containsKey("fill_item")) {
-                                if (!hasFillItem(itemData)) {
+                            if (checkValue("fill_item")) {
+                                if (!isFillItem(itemData)) {
                                     continue;
                                 }
-                                fillItem = hasFillItem(itemData);
+                                fillItem = isFillItem(itemData);
                             }
 
                             if (slot == 0 && !fillItem) {
@@ -109,7 +111,7 @@ public class InventoryCreator {
                                 plugin.getLogger().severe("Both \"slot\" and \"fill_item\" options found for item in inventory \"" + inventoryId + "\"! Please only define one.");
                                 continue;
                             }
-                            if (!itemData.containsKey("type")) {
+                            if (!checkValue("type")) {
                                 plugin.getLogger().severe("No item type found for item in inventory \"" + inventoryId + "\"!");
                                 continue;
                             }
@@ -127,52 +129,51 @@ public class InventoryCreator {
                             ItemStack item = new ItemStack(material);
                             ItemMeta meta = item.getItemMeta();
 
-                            if (itemData.containsKey("amount")) {
+                            if (checkValue("amount")) {
                                 int amount = getAmount(itemData);
                                 if (amount == 0) {
-                                    continue;
+                                    plugin.getLogger().severe("Setting amount to 1.");
+                                    amount = 1;
                                 }
                                 item.setAmount(amount);
                             }
+                            else {
+                                item.setAmount(1);
+                            }
 
-                            if (itemData.containsKey("name")) {
+                            if (checkValue("name")) {
                                 meta.displayName(deserializeText(itemData.get("name").toString()).asComponent().decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE));
                             }
 
-                            if (itemData.containsKey("lore")) {
+                            if (checkValue("lore")) {
                                 List<Component> lore = getLore(itemData);
-                                if (lore == null) {
-                                    continue;
-                                }
-                                meta.lore(lore);
-                            }
-
-                            if (itemData.containsKey("mm_skill")) {
-                                if (!handleMMSkill(itemData, meta)) {
-                                    continue;
+                                if (lore != null) {
+                                    meta.lore(lore);
                                 }
                             }
 
-                            if (itemData.containsKey("click_type")) {
-                                if (!handleClickType(itemData, meta)) {
-                                    continue;
-                                }
+                            if (checkValue("mm_skill")) {
+                                hasMMSkill(itemData, meta);
                             }
 
-                            if (itemData.containsKey("item_flags")) {
-                                if (!handleItemFlags(itemData, meta, item)) {
-                                    continue;
-                                }
+                            if (checkValue("click_type")) {
+                                hasClickType(itemData, meta);
                             }
 
-                            if (itemData.containsKey("interactable")) {
-                                if (!(handleIfInteractable(itemData, meta, item))) {
-                                    continue;
-                                }
+                            if (checkValue("item_flags")) {
+                                hasItemFlags(itemData, meta, item);
+                            }
+
+                            if (checkValue("interactable")) {
+                                isInteractable(itemData, slot, item, inventory);
+                            }
+
+                            if (checkValue("save")) {
+                                shouldSave(itemData, slot, inventory);
                             }
 
                             // TODO: Implement commands
-                            //if (itemData.containsKey("commands")) {
+                            //if (checkValue("commands")) {
                             //    List<?> commandsList = itemData.get("commands") instanceof List ? (List<?>) itemData.get("commands") : null;
                             //    if (commandsList == null) {
                             //        plugin.getLogger().severe("Invalid commands format/options in inventory \"" + inventoryId + "\" with item type " + material + "!");
@@ -230,7 +231,7 @@ public class InventoryCreator {
         return legacy.deserialize(legacy.serialize(mm.deserialize(text).asComponent()));
     }
 
-    private boolean hasFillItem(Map<?, ?> itemData) {
+    private boolean isFillItem(Map<?, ?> itemData) {
         Object fillItemObj = itemData.get("fill_item");
         if (fillItemObj instanceof Boolean) {
             return (boolean) fillItemObj;
@@ -241,6 +242,12 @@ public class InventoryCreator {
         }
     }
 
+    /**
+     * Get the amount of the item.
+     *
+     * @param itemData The item data.
+     * @return The amount of the item.
+     */
     private int getAmount(Map<?, ?> itemData) {
         Object amountObj = itemData.get("amount");
         if (amountObj instanceof Integer) {
@@ -252,6 +259,12 @@ public class InventoryCreator {
         }
     }
 
+    /**
+     * Get the lore for the item.
+     *
+     * @param itemData The item data.
+     * @return The lore for the item.
+     */
     private List<Component> getLore(Map<?, ?> itemData) {
         List<?> loreList = itemData.get("lore") instanceof List ? (List<?>) itemData.get("lore") : null;
         if (loreList == null) {
@@ -264,18 +277,34 @@ public class InventoryCreator {
                 .toList();
     }
 
-    private boolean handleMMSkill(Map<?, ?> itemData, ItemMeta meta) {
+    /**
+     * Checks if the item has a MythicMobs skill.
+     *
+     * @param itemData The item data.
+     * @param meta The item meta.
+     */
+    private void hasMMSkill(Map<?, ?> itemData, ItemMeta meta) {
         String skillName = itemData.get("mm_skill").toString();
-        if (MythicBukkit.inst().getSkillManager().getSkill(skillName).isEmpty()) {
+        if (!plugin.isMythicMobsEnabled()) {
+            plugin.getLogger().warning("MythicMobs is not enabled! Cannot set skill: " + skillName);
+            return;
+        }
+        if (plugin.getMythicInst().getSkillManager().getSkill(skillName).isEmpty()) {
             plugin.getLogger().severe("Invalid skill name \"" + skillName + "\" in inventory \"" + inventoryId + "\"!");
-            return false;
+            return;
         }
         NamespacedKey key = new NamespacedKey(plugin, "skill");
         meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, skillName);
-        return true;
     }
 
-    private boolean handleClickType(Map<?, ?> itemData, ItemMeta meta) {
+    /**
+     * Checks if the item has a click type.
+     *
+     * @param itemData The item data.
+     * @param meta The item meta.
+     * @return True if the item has a click type, false otherwise.
+     */
+    private boolean hasClickType(Map<?, ?> itemData, ItemMeta meta) {
         String clickType = itemData.get("click_type").toString().toUpperCase();
         if (Arrays.stream(ClickTypes.values()).noneMatch(type -> type.name().equals(clickType))) {
             plugin.getLogger().severe("Invalid click type \"" + clickType + "\" in inventory \"" + inventoryId + "\"!");
@@ -286,11 +315,18 @@ public class InventoryCreator {
         return true;
     }
 
-    private boolean handleItemFlags(Map<?, ?> itemData, ItemMeta meta, ItemStack item) {
+    /**
+     * Checks if the item has item flags.
+     *
+     * @param itemData The item data.
+     * @param meta The item meta.
+     * @param item The item to check.
+     */
+    private void hasItemFlags(Map<?, ?> itemData, ItemMeta meta, ItemStack item) {
         List<?> itemFlagList = itemData.get("item_flags") instanceof List ? (List<?>) itemData.get("item_flags") : null;
         if (itemFlagList == null) {
             plugin.getLogger().severe("Invalid item_flag format/options in inventory \"" + inventoryId + "\" with item type " + item.getType() + "!");
-            return false;
+            return;
         }
         for (Object flag : itemFlagList) {
             try {
@@ -298,23 +334,51 @@ public class InventoryCreator {
             }
             catch (IllegalArgumentException e) {
                 plugin.getLogger().severe("Invalid item flag \"" + flag + "\" in inventory \"" + inventoryId + "\"" + "!");
-                return false;
+                return;
             }
         }
-        return true;
     }
 
-    private boolean handleIfInteractable(Map<?, ?> itemData, ItemMeta meta, ItemStack item) {
+    /**
+     * Checks if the item is interactable.
+     *
+     * @param itemData The item data.
+     * @param slot     The slot of the item.
+     * @param item     The item to check.
+     * @param inventory The inventory to add the interactable item to.
+     */
+    private void isInteractable(Map<?, ?> itemData, int slot, ItemStack item, MythicInventory inventory) {
         Boolean interactable = (Boolean) itemData.get("interactable");
         if (interactable == null) {
             plugin.getLogger().severe("Invalid interactable value found in inventory \"" + inventoryId + "\" with item type " + item.getType() + "!");
-            return false;
+            return;
         }
-        NamespacedKey key = new NamespacedKey(plugin, "interactable");
-        meta.getPersistentDataContainer().set(key, PersistentDataType.BOOLEAN, interactable);
-        return true;
+        if (!interactable) return;
+        inventory.addInteractableItem(slot, item);
     }
 
+    /**
+     * Checks if the item should be saved.
+     *
+     * @param itemData The item data.
+     * @param inventory The inventory to save the item to.
+     */
+    private void shouldSave(Map<?, ?> itemData, int slot, MythicInventory inventory) {
+        Boolean save = (Boolean) itemData.get("save");
+        if (save == null) {
+            plugin.getLogger().severe("Invalid save value found in inventory \"" + inventoryId + "!");
+            return;
+        }
+        if (!save) return;
+        inventory.addSavedItem(slot);
+    }
+
+    /**
+     * Get the slot number for the item.
+     *
+     * @param itemData The item data.
+     * @return The slot number for the item, 0 if invalid or not found.
+     */
     private int getSlot(Map<?, ?> itemData) {
         Object slotObj = itemData.get("slot");
         if (slotObj instanceof Integer) {
@@ -324,5 +388,15 @@ public class InventoryCreator {
             plugin.getLogger().severe("Invalid slot value \"" + slotObj + "\" in inventory \"" + inventoryId + "\"!");
             return 0;
         }
+    }
+
+    /**
+     * Check if the item has the given value, basic thing to reduce the weird "containsKey" stuff.
+     *
+     * @param key The key to check (duh).
+     * @return True if the item has the value, false otherwise.
+     */
+    private boolean checkValue(String key) {
+        return itemData.containsKey(key);
     }
 }

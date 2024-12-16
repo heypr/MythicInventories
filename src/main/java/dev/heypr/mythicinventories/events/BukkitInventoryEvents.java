@@ -1,54 +1,55 @@
 package dev.heypr.mythicinventories.events;
 
-import io.lumine.mythic.bukkit.MythicBukkit;
 import dev.heypr.mythicinventories.MythicInventories;
 import dev.heypr.mythicinventories.inventories.MythicInventory;
 import org.bukkit.NamespacedKey;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.inventory.DragType;
-import org.bukkit.event.inventory.InventoryAction;
-import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.inventory.InventoryDragEvent;
+import org.bukkit.event.inventory.*;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 
 import static org.bukkit.event.inventory.InventoryAction.*;
 
-public class InventoryEvents implements Listener {
+public class BukkitInventoryEvents implements Listener {
 
     private final MythicInventories plugin;
 
-    public InventoryEvents(MythicInventories plugin) {
+    public BukkitInventoryEvents(MythicInventories plugin) {
         this.plugin = plugin;
     }
 
     @EventHandler
     public void onClick(InventoryClickEvent event) {
-        if (!(event.getInventory().getHolder() instanceof MythicInventory || event.getClickedInventory() instanceof MythicInventory)) return;
+        if (event.getClickedInventory() == null) return;
+        if (!(event.getClickedInventory().getHolder() instanceof MythicInventory inventory)) return;
+        if (event.getCurrentItem() == null) return;
 
-        if (event.getCurrentItem() instanceof ItemStack item) {
+        if (!hasInteractable(inventory) || !isInteractable(inventory, event.getRawSlot())) {
             event.setCancelled(true);
-            checkClickType(event, item);
-//            runCommands(item);
+            checkClickType(event, event.getCurrentItem());
         }
     }
 
     @EventHandler
     public void onDrag(InventoryDragEvent event) {
-        if (!(event.getInventory().getHolder() instanceof MythicInventory)) return;
+        if (!(event.getInventory().getHolder() instanceof MythicInventory inventory)) return;
+        if (event.getCursor() == null) return;
 
-        if (event.getCursor() instanceof ItemStack item) {
+        for (int slot : event.getRawSlots()) {
+            if (isInteractable(inventory, slot)) continue;
             event.setCancelled(true);
-            checkDragType(event, item);
-//            runCommands(item);
+            checkDragType(event, event.getCursor());
+//          runCommands(item);
+            }
         }
 
-        if (event.getOldCursor() instanceof ItemStack item) {
-            event.setCancelled(true);
-            checkDragType(event, item);
-//            runCommands(item);
-        }
+    @EventHandler
+    private void onClose(InventoryCloseEvent event) {
+        if (!(event.getInventory().getHolder() instanceof MythicInventory inventory)) return;
+
+        plugin.getInventorySerializer().saveInventory(inventory, (Player) event.getPlayer());
     }
 
     private void castSkill(InventoryDragEvent event, ItemStack item) {
@@ -60,7 +61,12 @@ public class InventoryEvents implements Listener {
         if (skillName == null) {
             return;
         }
-        MythicBukkit.inst().getAPIHelper().castSkill(event.getWhoClicked(), skillName);
+        if (plugin.isMythicMobsEnabled()) {
+            plugin.getMythicInst().getAPIHelper().castSkill(event.getWhoClicked(), skillName);
+        }
+        else {
+            plugin.getLogger().warning("MythicMobs is not enabled! Cannot cast skill: " + skillName);
+        }
     }
 
     private void castSkill(InventoryClickEvent event, ItemStack item) {
@@ -72,7 +78,12 @@ public class InventoryEvents implements Listener {
         if (skillName == null) {
             return;
         }
-        MythicBukkit.inst().getAPIHelper().castSkill(event.getWhoClicked(), skillName);
+        if (plugin.isMythicMobsEnabled()) {
+            plugin.getMythicInst().getAPIHelper().castSkill(event.getWhoClicked(), skillName);
+        }
+        else {
+            plugin.getLogger().warning("MythicMobs is not enabled! Cannot cast skill: " + skillName);
+        }
     }
 
     private void checkClickType(InventoryClickEvent event, ItemStack item) {
@@ -114,7 +125,7 @@ public class InventoryEvents implements Listener {
                 }
                 break;
             case "SHIFT_MIDDLE_CLICK":
-                if (event.isShiftClick() && action == InventoryAction.CLONE_STACK){
+                if (event.isShiftClick() && action == InventoryAction.CLONE_STACK) {
                     castSkill(event, item);
                 }
                 break;
@@ -158,7 +169,15 @@ public class InventoryEvents implements Listener {
             }
         }
     }
-    
+
+    private boolean isInteractable(MythicInventory inventory, int slot) {
+        return inventory.getInteractableItems().containsKey(slot);
+    }
+
+    private boolean hasInteractable(MythicInventory inventory) {
+        return !inventory.getInteractableItems().isEmpty();
+    }
+
 // TODO: fix this shit
 //    private void runCommands(ItemStack item) {
 //        NamespacedKey key = new NamespacedKey(plugin, "commands");
@@ -182,9 +201,4 @@ public class InventoryEvents implements Listener {
 //            }
 //        }
 //    }
-
-    private boolean isInteractable(ItemStack item) {
-        NamespacedKey key = new NamespacedKey(plugin, "interactable");
-        return item.getItemMeta().getPersistentDataContainer().getOrDefault(key, PersistentDataType.BOOLEAN, false);
-    }
 }
