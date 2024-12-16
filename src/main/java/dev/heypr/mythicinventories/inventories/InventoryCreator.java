@@ -2,7 +2,6 @@ package dev.heypr.mythicinventories.inventories;
 
 import dev.heypr.mythicinventories.MythicInventories;
 import dev.heypr.mythicinventories.misc.ClickTypes;
-import io.lumine.mythic.bukkit.MythicBukkit;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -286,7 +285,11 @@ public class InventoryCreator {
      */
     private void hasMMSkill(Map<?, ?> itemData, ItemMeta meta) {
         String skillName = itemData.get("mm_skill").toString();
-        if (MythicBukkit.inst().getSkillManager().getSkill(skillName).isEmpty()) {
+        if (!plugin.isMythicMobsEnabled()) {
+            plugin.getLogger().warning("MythicMobs is not enabled! Cannot set skill: " + skillName);
+            return;
+        }
+        if (plugin.getMythicInst().getSkillManager().getSkill(skillName).isEmpty()) {
             plugin.getLogger().severe("Invalid skill name \"" + skillName + "\" in inventory \"" + inventoryId + "\"!");
             return;
         }

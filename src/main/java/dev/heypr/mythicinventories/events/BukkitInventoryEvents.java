@@ -1,6 +1,5 @@
 package dev.heypr.mythicinventories.events;
 
-import io.lumine.mythic.bukkit.MythicBukkit;
 import dev.heypr.mythicinventories.MythicInventories;
 import dev.heypr.mythicinventories.inventories.MythicInventory;
 import org.bukkit.NamespacedKey;
@@ -13,11 +12,11 @@ import org.bukkit.persistence.PersistentDataType;
 
 import static org.bukkit.event.inventory.InventoryAction.*;
 
-public class InventoryEvents implements Listener {
+public class BukkitInventoryEvents implements Listener {
 
     private final MythicInventories plugin;
 
-    public InventoryEvents(MythicInventories plugin) {
+    public BukkitInventoryEvents(MythicInventories plugin) {
         this.plugin = plugin;
     }
 
@@ -62,7 +61,12 @@ public class InventoryEvents implements Listener {
         if (skillName == null) {
             return;
         }
-        MythicBukkit.inst().getAPIHelper().castSkill(event.getWhoClicked(), skillName);
+        if (plugin.isMythicMobsEnabled()) {
+            plugin.getMythicInst().getAPIHelper().castSkill(event.getWhoClicked(), skillName);
+        }
+        else {
+            plugin.getLogger().warning("MythicMobs is not enabled! Cannot cast skill: " + skillName);
+        }
     }
 
     private void castSkill(InventoryClickEvent event, ItemStack item) {
@@ -74,7 +78,12 @@ public class InventoryEvents implements Listener {
         if (skillName == null) {
             return;
         }
-        MythicBukkit.inst().getAPIHelper().castSkill(event.getWhoClicked(), skillName);
+        if (plugin.isMythicMobsEnabled()) {
+            plugin.getMythicInst().getAPIHelper().castSkill(event.getWhoClicked(), skillName);
+        }
+        else {
+            plugin.getLogger().warning("MythicMobs is not enabled! Cannot cast skill: " + skillName);
+        }
     }
 
     private void checkClickType(InventoryClickEvent event, ItemStack item) {
@@ -161,6 +170,14 @@ public class InventoryEvents implements Listener {
         }
     }
 
+    private boolean isInteractable(MythicInventory inventory, int slot) {
+        return inventory.getInteractableItems().containsKey(slot);
+    }
+
+    private boolean hasInteractable(MythicInventory inventory) {
+        return !inventory.getInteractableItems().isEmpty();
+    }
+
 // TODO: fix this shit
 //    private void runCommands(ItemStack item) {
 //        NamespacedKey key = new NamespacedKey(plugin, "commands");
@@ -184,12 +201,4 @@ public class InventoryEvents implements Listener {
 //            }
 //        }
 //    }
-
-    private boolean isInteractable(MythicInventory inventory, int slot) {
-        return inventory.getInteractableItems().containsKey(slot);
-    }
-
-    private boolean hasInteractable(MythicInventory inventory) {
-        return !inventory.getInteractableItems().isEmpty();
-    }
 }

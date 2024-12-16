@@ -2,15 +2,13 @@ package dev.heypr.mythicinventories;
 
 import dev.heypr.mythicinventories.bstats.Metrics;
 import dev.heypr.mythicinventories.commands.OpenInventoryTabCompleter;
-import dev.heypr.mythicinventories.events.InventoryEvents;
+import dev.heypr.mythicinventories.events.BukkitInventoryEvents;
+import dev.heypr.mythicinventories.events.MythicMobEvents;
 import dev.heypr.mythicinventories.inventories.InventoryCreator;
 import dev.heypr.mythicinventories.inventories.MythicInventory;
 import dev.heypr.mythicinventories.commands.OpenInventoryCommand;
-import dev.heypr.mythicinventories.mythicmobs.OpenInventoryMechanic;
 import dev.heypr.mythicinventories.storage.MythicInventorySerializer;
-import io.lumine.mythic.bukkit.events.MythicMechanicLoadEvent;
 import org.bukkit.Bukkit;
-import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -35,20 +33,21 @@ public final class MythicInventories extends JavaPlugin implements Listener {
             return true;
         });
 
-        Bukkit.getPluginManager().registerEvents(new InventoryEvents(this), this);
+        Bukkit.getPluginManager().registerEvents(new BukkitInventoryEvents(this), this);
+
+        if (!isMythicMobsEnabled()) {
+            getLogger().warning("MythicMobs was not found! MythicInventories will have reduced functionality.");
+        }
+        else {
+            Bukkit.getPluginManager().registerEvents(new MythicMobEvents(this), this);
+        }
 
         createInventoriesDirectory();
         reloadInventories();
+
         new Metrics(this, 23863);
 
         getLogger().info("MythicInventories enabled!");
-    }
-
-    @EventHandler
-    public void onMythicMechanicLoad(MythicMechanicLoadEvent event)	{
-        if (event.getMechanicName().equalsIgnoreCase("openinventory")) {
-            event.register(new OpenInventoryMechanic(event.getConfig(), this));
-        }
     }
 
     @Override
@@ -106,5 +105,13 @@ public final class MythicInventories extends JavaPlugin implements Listener {
      */
     public void addInventory(MythicInventory inventory, String inventoryId) {
         inventories.put(inventoryId, inventory);
+    }
+
+    public boolean isMythicMobsEnabled() {
+        return getServer().getPluginManager().isPluginEnabled("MythicMobs");
+    }
+
+    public io.lumine.mythic.bukkit.MythicBukkit getMythicInst() {
+        return io.lumine.mythic.bukkit.MythicBukkit.inst();
     }
 }
