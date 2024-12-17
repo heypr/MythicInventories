@@ -1,12 +1,12 @@
 package dev.heypr.mythicinventories;
 
 import dev.heypr.mythicinventories.bstats.Metrics;
+import dev.heypr.mythicinventories.commands.OpenInventoryCommand;
 import dev.heypr.mythicinventories.commands.OpenInventoryTabCompleter;
 import dev.heypr.mythicinventories.events.BukkitInventoryEvents;
 import dev.heypr.mythicinventories.events.MythicMobEvents;
 import dev.heypr.mythicinventories.inventories.InventoryCreator;
 import dev.heypr.mythicinventories.inventories.MythicInventory;
-import dev.heypr.mythicinventories.commands.OpenInventoryCommand;
 import dev.heypr.mythicinventories.storage.MythicInventorySerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.event.Listener;
@@ -15,12 +15,11 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.io.File;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public final class MythicInventories extends JavaPlugin implements Listener {
 
     // Format: internal inventory name -> MythicInventory object
-    private final Map<String, MythicInventory> inventories = new HashMap<>();
+    private final HashMap<String, MythicInventory> inventories = new HashMap<>();
 
     @Override
     public void onEnable() {
@@ -86,7 +85,7 @@ public final class MythicInventories extends JavaPlugin implements Listener {
      * Get a map of all inventories.
      * @return A map of all inventories.
      */
-    public Map<String, MythicInventory> getInventories() {
+    public HashMap<String, MythicInventory> getInventories() {
         return inventories;
     }
 
