@@ -98,6 +98,8 @@ public class BukkitInventoryEvents implements Listener {
             return;
         }
         boolean isDrop = (action == DROP_ALL_SLOT || action == DROP_ONE_SLOT || action == DROP_ALL_CURSOR || action == DROP_ONE_CURSOR);
+        boolean isMiddleClick = (action == CLONE_STACK);
+        boolean isHotbarSwap = (action == HOTBAR_SWAP);
         switch (clickType) {
             case "LEFT_CLICK":
                 if (event.isLeftClick() && !event.isShiftClick()) {
@@ -120,12 +122,12 @@ public class BukkitInventoryEvents implements Listener {
                 }
                 break;
             case "MIDDLE_CLICK":
-                if (action == InventoryAction.CLONE_STACK) {
+                if (isMiddleClick) {
                     castSkill(event, item);
                 }
                 break;
             case "SHIFT_MIDDLE_CLICK":
-                if (event.isShiftClick() && action == InventoryAction.CLONE_STACK) {
+                if (event.isShiftClick() && isMiddleClick) {
                     castSkill(event, item);
                 }
                 break;
@@ -140,7 +142,7 @@ public class BukkitInventoryEvents implements Listener {
                 }
                 break;
             case "HOTBAR_SWAP":
-                if (action == InventoryAction.HOTBAR_SWAP) {
+                if (isHotbarSwap) {
                     castSkill(event, item);
                 }
                 break;

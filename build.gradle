@@ -3,10 +3,14 @@ plugins {
 }
 
 group = 'me.hyper'
-version = '0.6.0-b' + buildNumber() + '-DEV'
+version = '0.6.1-b' + buildNumber() + "-" + buildBranch()
 
-def buildNumber() {
+static def buildNumber() {
     System.getenv("BUILD_NUMBER") ?: "UNKNOWN"
+}
+
+static def buildBranch() {
+    System.getenv("BUILD_CLASS") ?: "DEV"
 }
 
 repositories {
