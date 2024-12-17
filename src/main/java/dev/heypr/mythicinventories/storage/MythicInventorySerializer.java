@@ -1,14 +1,15 @@
 package dev.heypr.mythicinventories.storage;
 
 import com.google.gson.*;
-import com.google.gson.reflect.TypeToken;
 import dev.heypr.mythicinventories.MythicInventories;
 import dev.heypr.mythicinventories.inventories.MythicInventory;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
-import java.io.*;
-import java.lang.reflect.Type;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 
 public class MythicInventorySerializer {
@@ -41,7 +42,7 @@ public class MythicInventorySerializer {
             if (item == null) continue;
             if (!inventory.getSavedItems().contains(i)) continue;
             try {
-                Map<String, Object> itemData = new HashMap<>();
+                HashMap<String, Object> itemData = new HashMap<>();
                 itemData.put("slot", i);
                 itemData.put("item", item.serialize());
                 inventoryData.add(itemData);

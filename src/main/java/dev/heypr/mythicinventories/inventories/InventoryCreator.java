@@ -116,17 +116,38 @@ public class InventoryCreator {
                                 continue;
                             }
 
-                            Material material;
-
-                            try {
-                                material = Material.valueOf(itemData.get("type").toString().toUpperCase());
-                            }
-                            catch (IllegalArgumentException e) {
-                                plugin.getLogger().severe("Invalid material type \"" + itemData.get("type") + "\" in inventory \"" + inventoryId + "\"!");
+                            if (!checkValue("type")) {
+                                plugin.getLogger().severe("No item type found for item in inventory \"" + inventoryId + "\"!");
                                 continue;
                             }
 
-                            ItemStack item = new ItemStack(material);
+                            ItemStack item;
+                            String type = itemData.get("type").toString();
+
+                            if (type.startsWith("mythic:")) {
+                                if (plugin.isMythicMobsEnabled()) {
+                                    type = type.replace("mythic:", "");
+                                    if (plugin.getMythicInst().getItemManager().getItem(type).isEmpty()) {
+                                        plugin.getLogger().severe("Invalid MythicMobs item \"" + type + "\" in inventory \"" + inventoryId + "\"!");
+                                        continue;
+                                    }
+                                    item = io.lumine.mythic.bukkit.BukkitAdapter.adapt(plugin.getMythicInst().getItemManager().getItem(type).get().generateItemStack(1));
+                                }
+                                else {
+                                    plugin.getLogger().severe("MythicMobs is not enabled! Cannot set item type to: " + type);
+                                    continue;
+                                }
+                            }
+                            else {
+                                try {
+                                    item = new ItemStack(Material.valueOf(itemData.get("type").toString().toUpperCase()));
+                                }
+                                catch (IllegalArgumentException e) {
+                                    plugin.getLogger().severe("Invalid item type \"" + itemData.get("type") + "\" in inventory \"" + inventoryId + "\"!");
+                                    continue;
+                                }
+                            }
+
                             ItemMeta meta = item.getItemMeta();
 
                             if (checkValue("amount")) {
@@ -171,24 +192,6 @@ public class InventoryCreator {
                             if (checkValue("save")) {
                                 shouldSave(itemData, slot, inventory);
                             }
-
-                            // TODO: Implement commands
-                            //if (checkValue("commands")) {
-                            //    List<?> commandsList = itemData.get("commands") instanceof List ? (List<?>) itemData.get("commands") : null;
-                            //    if (commandsList == null) {
-                            //        plugin.getLogger().severe("Invalid commands format/options in inventory \"" + inventoryId + "\" with item type " + material + "!");
-                            //        continue;
-                            //    }
-                            //    // WHAT THE FUCK IS This
-                            //    for (Object command : commandsList) {
-                            //        if (command instanceof String) {
-                            //            meta.getPersistentDataContainer().set(new NamespacedKey(plugin, "commands"), PersistentDataType.STRING, command.toString());
-                            //        }
-                            //        else {
-                            //            plugin.getLogger().severe("Invalid command \"" + command + "\" in inventory \"" + inventoryId + "\"" + "!");
-                            //        }
-                            //    }
-                            //}
 
                             item.setItemMeta(meta);
 
