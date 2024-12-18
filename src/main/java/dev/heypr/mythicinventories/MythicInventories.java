@@ -68,7 +68,7 @@ public final class MythicInventories extends JavaPlugin implements Listener {
      */
     public void reloadInventories() {
         inventories.clear();
-        new InventoryCreator(this).loadInventories();
+        new InventoryCreator(this).createInventories();
     }
 
     /**
@@ -106,6 +106,10 @@ public final class MythicInventories extends JavaPlugin implements Listener {
         inventories.put(inventoryId, inventory);
     }
 
+    /**
+     * Check if MythicMobs is enabled.
+     * @return True if MythicMobs is enabled, false otherwise.
+     */
     public boolean isMythicMobsEnabled() {
         return getServer().getPluginManager().isPluginEnabled("MythicMobs");
     }

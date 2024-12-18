@@ -3,7 +3,7 @@ plugins {
 }
 
 group = 'me.hyper'
-version = '0.6.1-b' + buildNumber() + "-" + buildBranch()
+version = '0.6.2-b' + buildNumber() + "-" + buildBranch()
 
 static def buildNumber() {
     System.getenv("BUILD_NUMBER") ?: "UNKNOWN"
