@@ -1,6 +1,10 @@
 package dev.heypr.mythicinventories.storage;
 
-import com.google.gson.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
+import de.tr7zw.changeme.nbtapi.NBT;
+import de.tr7zw.changeme.nbtapi.iface.ReadWriteNBT;
 import dev.heypr.mythicinventories.MythicInventories;
 import dev.heypr.mythicinventories.inventories.MythicInventory;
 import org.bukkit.entity.Player;
@@ -10,7 +14,11 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.*;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 
 public class MythicInventorySerializer {
 
@@ -36,16 +44,16 @@ public class MythicInventorySerializer {
      * Serialize the inventory to JSON.
      */
     public String serializeToJson(MythicInventory inventory) {
-        List<Map<String, Object>> inventoryData = new ArrayList<>();
+        HashMap<Integer, String> inventoryData = new HashMap<>();
         for (int i = 0; i < inventory.getInventory().getSize(); i++) {
             ItemStack item = inventory.getInventory().getItem(i);
             if (item == null) continue;
             if (!inventory.getSavedItems().contains(i)) continue;
             try {
-                HashMap<String, Object> itemData = new HashMap<>();
-                itemData.put("slot", i);
-                itemData.put("item", item.serialize());
-                inventoryData.add(itemData);
+                ReadWriteNBT nbt = NBT.itemStackToNBT(item);
+                // i = slot
+                // nbt = item data
+                inventoryData.put(i, nbt.toString());
             }
             catch (Exception e) {
                 plugin.getLogger().severe("Failed to serialize item in slot " + i + ": " + e.getMessage());
@@ -62,21 +70,15 @@ public class MythicInventorySerializer {
      */
     public MythicInventory deserializeInventoryFromJson(File file, String inventoryInternalName) {
         try (FileReader reader = new FileReader(file)) {
-            JsonArray jsonArray = gson.fromJson(reader, JsonArray.class);
-
             MythicInventory inventory = new MythicInventory(plugin, inventoryInternalName);
 
-            for (JsonElement element : jsonArray) {
-                JsonObject obj = element.getAsJsonObject();
-                int slot = obj.get("slot").getAsInt();
-                JsonObject itemObj = obj.getAsJsonObject("item");
+            Type hashMapType = new TypeToken<HashMap<Integer, String>>() {}.getType();
 
-                Map<String, Object> itemData = gson.fromJson(itemObj, Map.class);
-                ItemStack item = ItemStack.deserialize(itemData);
-
-                inventory.setItem(slot, item);
+            HashMap<Integer, String> map = gson.fromJson(reader, hashMapType);
+            for (Integer slot : map.keySet()) {
+                ReadWriteNBT nbt = NBT.parseNBT(map.get(slot));
+                inventory.setItem(slot, NBT.itemStackFromNBT(nbt));
             }
-
             return inventory;
         }
         catch (IOException e) {

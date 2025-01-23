@@ -1,5 +1,6 @@
 package dev.heypr.mythicinventories;
 
+import de.tr7zw.changeme.nbtapi.NBT;
 import dev.heypr.mythicinventories.bstats.Metrics;
 import dev.heypr.mythicinventories.commands.OpenInventoryCommand;
 import dev.heypr.mythicinventories.commands.OpenInventoryTabCompleter;
@@ -39,6 +40,12 @@ public final class MythicInventories extends JavaPlugin implements Listener {
         }
         else {
             Bukkit.getPluginManager().registerEvents(new MythicMobEvents(this), this);
+        }
+
+        if (!NBT.preloadApi()) {
+            getLogger().severe("CRITICAL! NBT-API failed to load! Please contact hyper on Discord! Disabling MythicInventories...");
+            Bukkit.getPluginManager().disablePlugin(this);
+            return;
         }
 
         createInventoriesDirectory();
