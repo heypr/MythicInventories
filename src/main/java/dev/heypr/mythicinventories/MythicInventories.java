@@ -104,6 +104,15 @@ public final class MythicInventories extends JavaPlugin implements Listener {
     }
 
     /**
+     * Get an inventory by its internal name.
+     * @param inventoryId The internal name of the inventory.
+     * @return The inventory with the given internal name.
+     */
+    public MythicInventory getInventory(String inventoryId) {
+        return inventories.get(inventoryId);
+    }
+
+    /**
      * Get a list of all inventory names.
      * @return A list of all inventory names.
      */

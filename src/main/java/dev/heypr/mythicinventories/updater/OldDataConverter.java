@@ -31,8 +31,8 @@ public class OldDataConverter {
             }
             String uuid = file.getName();
             for (File inventoryFile : inventoryFiles) {
-                plugin.getLogger().info("Converting data for file " + inventoryFile.getName());
                 String inventoryInternalName = inventoryFile.getName().replace(".json", "");
+                plugin.getLogger().info("Converting data for file " + inventoryInternalName);
                 MythicInventory inventory = deserializeInventoryFromJsonLegacy(inventoryFile, inventoryInternalName);
                 if (inventory != null) {
                     plugin.getInventorySerializer().saveInventory(inventory, UUID.fromString(uuid));
@@ -45,7 +45,7 @@ public class OldDataConverter {
         try (FileReader reader = new FileReader(file)) {
             JsonArray jsonArray = gson.fromJson(reader, JsonArray.class);
 
-            MythicInventory inventory = new MythicInventory(plugin, inventoryInternalName);
+            MythicInventory inventory = plugin.getInventory(inventoryInternalName);
 
             for (JsonElement element : jsonArray) {
                 JsonObject obj = element.getAsJsonObject();

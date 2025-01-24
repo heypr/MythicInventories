@@ -36,6 +36,10 @@ public class MythicInventorySerializer {
         }
     }
 
+    /**
+     * Gets a list of player data files.
+     * @return A list of player data files.
+     */
     public List<File> getPlayerDataFiles() {
         File playerDataDir = new File(plugin.getDataFolder(), "playerdata");
         if (!playerDataDir.exists()) {

@@ -8,6 +8,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
@@ -42,7 +43,6 @@ public class BukkitInventoryEvents implements Listener {
             if (isInteractable(inventory, slot)) continue;
             event.setCancelled(true);
             checkDragType(event, inventory, slot);
-//          runCommands(item);
             }
         }
 
@@ -63,8 +63,10 @@ public class BukkitInventoryEvents implements Listener {
     }
 
     private void checkClickType(InventoryClickEvent event, MythicInventory inventory, int slot) {
-        Set<MIClickType> clickTypes = inventory.getClickTypes(slot).keySet();
-        for (MIClickType clickType : clickTypes) {
+        HashMap<MIClickType, List<String>> clickTypes = inventory.getClickTypes(slot);
+        if (clickTypes == null) return;
+        Set<MIClickType> clickTypesSet = clickTypes.keySet();
+        for (MIClickType clickType : clickTypesSet) {
             List<String> skills = inventory.getClickSkills(slot, clickType);
             if (skills == null) continue;
             for (String skill : skills) {
