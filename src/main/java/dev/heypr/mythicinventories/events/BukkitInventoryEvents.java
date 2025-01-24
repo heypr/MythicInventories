@@ -43,8 +43,8 @@ public class BukkitInventoryEvents implements Listener {
             if (isInteractable(inventory, slot)) continue;
             event.setCancelled(true);
             checkDragType(event, inventory, slot);
-            }
         }
+    }
 
     @EventHandler
     private void onClose(InventoryCloseEvent event) {
