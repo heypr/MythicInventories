@@ -1,6 +1,6 @@
 package dev.heypr.mythicinventories.misc;
 
-public enum ClickTypes {
+public enum MIClickType {
     LEFT_CLICK,
     RIGHT_CLICK,
     SHIFT_LEFT_CLICK,
@@ -10,4 +10,3 @@ public enum ClickTypes {
     DROP,
     HOTBAR_SWAP
 }
-

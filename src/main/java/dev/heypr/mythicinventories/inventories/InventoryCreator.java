@@ -1,27 +1,26 @@
 package dev.heypr.mythicinventories.inventories;
 
 import dev.heypr.mythicinventories.MythicInventories;
-import dev.heypr.mythicinventories.misc.ClickTypes;
+import dev.heypr.mythicinventories.misc.MIClickType;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.persistence.PersistentDataType;
 import org.yaml.snakeyaml.error.MarkedYAMLException;
 
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.logging.Level;
 
 public class InventoryCreator {
@@ -30,6 +29,7 @@ public class InventoryCreator {
     private String inventoryId;
     private Map<?, ?> itemData;
     private int inventoryCount;
+    private boolean fillItemExists = false;
 
     public InventoryCreator(MythicInventories plugin) {
         this.plugin = plugin;
@@ -90,11 +90,9 @@ public class InventoryCreator {
         MythicInventory inventory = new MythicInventory(plugin, size, deserializeText(displayName));
         inventory.setInternalName(inventoryId);
         List<Map<?, ?>> items = inventorySection.getMapList("items");
-
         for (Map<?, ?> itemData : items) {
-            if (!loadItem(itemData, inventory, size, inventoryId)) {
+            if (!loadItem(itemData, inventory, size, inventoryId, fillItemExists)) {
                 plugin.getLogger().severe("Failed to load item in inventory \"" + inventoryId + "\"!");
-                continue;
             }
         }
         plugin.addInventory(inventory, inventoryId);
@@ -102,15 +100,14 @@ public class InventoryCreator {
         return true;
     }
 
-    private boolean loadItem(Map<?, ?> itemData, MythicInventory inventory, int size, String inventoryId) {
+    private boolean loadItem(Map<?, ?> itemData, MythicInventory inventory, int size, String inventoryId, boolean fillItemAlreadyExists) {
 
         this.inventoryId = inventoryId;
         this.itemData = itemData;
-        boolean fillItemExists = false;
+        boolean isFillItem = false;
 
         try {
-            int slot = 0;
-            boolean fillItem = false;
+            int slot;
 
             if (checkValue("slot")) {
                 int fl = getSlot(itemData);
@@ -119,23 +116,23 @@ public class InventoryCreator {
                 }
                 slot = getSlot(itemData);
             }
-
-            if (checkValue("fill_item")) {
-                if (!isFillItem(itemData)) {
-                    return false;
-                }
-                fillItem = isFillItem(itemData);
+            else {
+                slot = 0;
             }
 
-            if (slot == 0 && !fillItem) {
+            if (checkValue("fill_item")) {
+                isFillItem = isFillItem(itemData);
+            }
+
+            if (slot == 0 && !isFillItem) {
                 plugin.getLogger().severe("No slot number found for an item in inventory \"" + inventoryId + "\"!");
                 return false;
             }
-            if (slot >= size && !fillItem) {
+            if (slot >= size && !isFillItem) {
                 plugin.getLogger().severe("Slot number for an item in inventory \"" + inventoryId + "\" is greater than the inventory size!");
                 return false;
             }
-            if (fillItem && slot != 0) {
+            if (isFillItem && slot != 0) {
                 plugin.getLogger().severe("Both \"slot\" and \"fill_item\" options found for item in inventory \"" + inventoryId + "\"! Please only define one.");
                 return false;
             }
@@ -200,13 +197,11 @@ public class InventoryCreator {
                 }
             }
 
-            if (checkValue("mm_skill")) {
-                hasMMSkill(itemData, meta);
-            }
-
-            if (checkValue("click_type")) {
-                hasClickType(itemData, meta);
-            }
+            Arrays.stream(MIClickType.values()).toList().iterator().forEachRemaining(clickType -> {
+                if (checkValue(clickType.name().toUpperCase())) {
+                    handleClickType(itemData, inventory, clickType, slot);
+                }
+            });
 
             if (checkValue("item_flags")) {
                 hasItemFlags(itemData, meta, item);
@@ -222,12 +217,12 @@ public class InventoryCreator {
 
             item.setItemMeta(meta);
 
-            if (fillItem) {
+            if (isFillItem) {
                 if (fillItemExists) {
                     plugin.getLogger().severe("More than one item in inventory \"" + inventoryId + "\" has been defined as being a fill item! Please only define one.");
                     return false;
                 }
-                fillItemExists = true;
+                this.fillItemExists = true;
                 for (int i = 0; i < size; i++) {
                     if (inventory.getInventory().getItem(i) != null) {
                         return false;
@@ -310,41 +305,31 @@ public class InventoryCreator {
     }
 
     /**
-     * Checks if the item has a MythicMobs skill.
-     *
-     * @param itemData The item data.
-     * @param meta The item meta.
-     */
-    private void hasMMSkill(Map<?, ?> itemData, ItemMeta meta) {
-        String skillName = itemData.get("mm_skill").toString();
-        if (!plugin.isMythicMobsEnabled()) {
-            plugin.getLogger().warning("MythicMobs is not enabled! Cannot set skill: " + skillName);
-            return;
-        }
-        if (plugin.getMythicInst().getSkillManager().getSkill(skillName).isEmpty()) {
-            plugin.getLogger().severe("Invalid skill name \"" + skillName + "\" in inventory \"" + inventoryId + "\"!");
-            return;
-        }
-        NamespacedKey key = new NamespacedKey(plugin, "skill");
-        meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, skillName);
-    }
-
-    /**
      * Checks if the item has a click type.
      *
-     * @param itemData The item data.
-     * @param meta The item meta.
-     * @return True if the item has a click type, false otherwise.
+     * @param itemData  The item data.
+     * @param inventory The inventory to add the click type to.
+     * @param clickType The click type to check.
+     *
      */
-    private boolean hasClickType(Map<?, ?> itemData, ItemMeta meta) {
-        String clickType = itemData.get("click_type").toString().toUpperCase();
-        if (Arrays.stream(ClickTypes.values()).noneMatch(type -> type.name().equals(clickType))) {
-            plugin.getLogger().severe("Invalid click type \"" + clickType + "\" in inventory \"" + inventoryId + "\"!");
-            return false;
+    private void handleClickType(Map<?, ?> itemData, MythicInventory inventory, MIClickType clickType, int slot) {
+        String clickTypeKey = clickType.name().toLowerCase();
+        Object clickTypeValue = itemData.get(clickTypeKey);
+
+        if (clickTypeValue instanceof List<?> clickTypeValueList && plugin.isMythicMobsEnabled()) {
+            for (Object value : clickTypeValueList) {
+                if (!(value instanceof String)) {
+                    plugin.getLogger().severe("Invalid skill value in click_type list for key \"" + clickTypeKey + "\" in inventory \"" + inventoryId + "\"!");
+                    continue;
+                }
+                Optional<io.lumine.mythic.api.skills.Skill> skill = plugin.getMythicInst().getSkillManager().getSkill(value.toString());
+                if (skill.isEmpty()) {
+                    plugin.getLogger().severe("Invalid skill \"" + value + "\" in inventory \"" + inventoryId + "\"!");
+                    continue;
+                }
+                inventory.addClickSkill(slot, clickType, value.toString());
+            }
         }
-        NamespacedKey key = new NamespacedKey(plugin, "click_type");
-        meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, clickType);
-        return true;
     }
 
     /**

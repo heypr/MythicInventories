@@ -1,22 +1,23 @@
 package dev.heypr.mythicinventories.inventories;
 
 import dev.heypr.mythicinventories.MythicInventories;
+import dev.heypr.mythicinventories.misc.MIClickType;
 import net.kyori.adventure.text.Component;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class MythicInventory implements InventoryHolder {
 
     private final Inventory inventory;
     private String internalName;
-    private final Set<Integer> savedItems = new HashSet<>();
-    private final HashMap<Integer, ItemStack> interactableItems = new HashMap<>();
+    private Set<Integer> savedItems = new HashSet<>();
+    private HashMap<Integer, ItemStack> interactableItems = new HashMap<>();
+    private HashMap<Integer, HashMap<MIClickType, List<String>>> clickSkills = new HashMap<>();
 
 
     public MythicInventory(MythicInventories plugin, int size, Component title) {
@@ -134,5 +135,78 @@ public class MythicInventory implements InventoryHolder {
      */
     public void removeInteractableItem(int slot) {
         interactableItems.remove(slot);
+    }
+
+    /**
+     * Get a click skill from the inventory.
+     *
+     * @param slot The slot to get the click skill(s) for.
+     * @return The click skill for the inventory.
+     */
+    @Nullable
+    public HashMap<MIClickType, List<String>> getClickTypes(int slot) {
+        return clickSkills.get(slot);
+    }
+
+    /**
+     * Get a click skill from the inventory.
+     *
+     * @param slot The slot to get the click skill(s) for.
+     * @param clickType The click type to get the skill for.
+     * @return The click skill for the inventory.
+     */
+    @Nullable
+    public List<String> getClickSkills(int slot, MIClickType clickType) {
+        return clickSkills.get(slot).get(clickType);
+    }
+
+    /**
+     * Add multiple click skills to the inventory.
+     *
+     * @param slot   The slot to add the skills to.
+     * @param skills The skills to add to the click type.
+     */
+    public void addClickSkills(int slot, HashMap<MIClickType, List<String>> skills) {
+        clickSkills.put(slot, skills);
+    }
+
+    /**
+     * Add a click requirement to the inventory.
+     *
+     * @param slot      The slot to listen for.
+     * @param clickType The click type to listen to.
+     */
+    public void addClick(int slot, MIClickType clickType) {
+        HashMap<MIClickType, List<String>> empty = new HashMap<>();
+        empty.put(clickType, null);
+        clickSkills.put(slot, empty);
+    }
+
+    /**
+     * Add a click skill to the inventory.
+     *
+     * @param slot      The slot to add the skill to.
+     * @param clickType The click type to add the skill to.
+     * @param skills    The skills to add to the click type.
+     */
+    public void addClickSkills(int slot, MIClickType clickType, List<String> skills) {
+        HashMap<MIClickType, List<String>> click = new HashMap<>();
+        click.put(clickType, skills);
+        clickSkills.put(slot, click);
+    }
+
+    /**
+     * Add a click skill to the inventory.
+     *
+     * @param slot      The slot to add the skill to.
+     * @param clickType The click type to add the skill to.
+     * @param skill     The skill to add to the click type.
+     */
+    public void addClickSkill(int slot, MIClickType clickType, String skill) {
+        HashMap<MIClickType, List<String>> click = new HashMap<>();
+        List<String> skills = new ArrayList<>();
+        skills.add(skill);
+        click.put(clickType, skills);
+        clickSkills.put(slot, click);
     }
 }

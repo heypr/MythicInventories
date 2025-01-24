@@ -1,7 +1,7 @@
 package dev.heypr.mythicinventories;
 
-import de.tr7zw.changeme.nbtapi.NBT;
 import dev.heypr.mythicinventories.bstats.Metrics;
+import dev.heypr.mythicinventories.commands.MigrateOldDataCommand;
 import dev.heypr.mythicinventories.commands.OpenInventoryCommand;
 import dev.heypr.mythicinventories.commands.OpenInventoryTabCompleter;
 import dev.heypr.mythicinventories.events.BukkitInventoryEvents;
@@ -9,21 +9,26 @@ import dev.heypr.mythicinventories.events.MythicMobEvents;
 import dev.heypr.mythicinventories.inventories.InventoryCreator;
 import dev.heypr.mythicinventories.inventories.MythicInventory;
 import dev.heypr.mythicinventories.storage.MythicInventorySerializer;
+import dev.heypr.mythicinventories.updater.OldDataConverter;
 import org.bukkit.Bukkit;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
 
 public final class MythicInventories extends JavaPlugin implements Listener {
 
     // Format: internal inventory name -> MythicInventory object
     private final HashMap<String, MythicInventory> inventories = new HashMap<>();
+    private List<UUID> confirmationList = new ArrayList<>();
 
     @Override
     public void onEnable() {
+        getCommand("migrateolddata").setExecutor(new MigrateOldDataCommand(this));
         getCommand("mythicinventoryopen").setExecutor(new OpenInventoryCommand(this));
         getCommand("mythicinventoryopen").setTabCompleter(new OpenInventoryTabCompleter(this));
 
@@ -40,12 +45,6 @@ public final class MythicInventories extends JavaPlugin implements Listener {
         }
         else {
             Bukkit.getPluginManager().registerEvents(new MythicMobEvents(this), this);
-        }
-
-        if (!NBT.preloadApi()) {
-            getLogger().severe("CRITICAL! NBT-API failed to load! Please contact hyper on Discord! Disabling MythicInventories...");
-            Bukkit.getPluginManager().disablePlugin(this);
-            return;
         }
 
         createInventoriesDirectory();
@@ -68,6 +67,14 @@ public final class MythicInventories extends JavaPlugin implements Listener {
      */
     public MythicInventorySerializer getInventorySerializer() {
         return new MythicInventorySerializer(this);
+    }
+
+    /**
+     * Get the old data converter.
+     * @return The old data converter.
+     */
+    public OldDataConverter getOldDataConverter() {
+        return new OldDataConverter(this);
     }
 
     /**
@@ -114,6 +121,32 @@ public final class MythicInventories extends JavaPlugin implements Listener {
     }
 
     /**
+     * Get the confirmation list.
+     * @return The confirmation list.
+     */
+    public List<UUID> getConfirmationList() {
+        return confirmationList;
+    }
+
+    /**
+     * Add a player to the confirmation list.
+     * @param player The player to add.
+     */
+    public void addPlayer(UUID player) {
+        if (!confirmationList.contains(player)) {
+            confirmationList.add(player);
+        }
+    }
+
+    /**
+     * Remove a player from the confirmation list.
+     * @param player The player to remove.
+     */
+    public void removePlayer(UUID player) {
+        confirmationList.remove(player);
+    }
+
+    /**
      * Check if MythicMobs is enabled.
      * @return True if MythicMobs is enabled, false otherwise.
      */
@@ -121,6 +154,10 @@ public final class MythicInventories extends JavaPlugin implements Listener {
         return getServer().getPluginManager().isPluginEnabled("MythicMobs");
     }
 
+    /**
+     * Get the MythicBukkit instance.
+     * @return The MythicBukkit instance.
+     */
     public io.lumine.mythic.bukkit.MythicBukkit getMythicInst() {
         return io.lumine.mythic.bukkit.MythicBukkit.inst();
     }
