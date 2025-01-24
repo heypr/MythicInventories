@@ -32,7 +32,7 @@ public class OldDataConverter {
             String uuid = file.getName();
             for (File inventoryFile : inventoryFiles) {
                 String inventoryInternalName = inventoryFile.getName().replace(".json", "");
-                plugin.getLogger().info("Converting data for file " + inventoryInternalName);
+                if (inventoryInternalName.equalsIgnoreCase("null")) continue;
                 MythicInventory inventory = deserializeInventoryFromJsonLegacy(inventoryFile, inventoryInternalName);
                 if (inventory != null) {
                     plugin.getInventorySerializer().saveInventory(inventory, UUID.fromString(uuid));
