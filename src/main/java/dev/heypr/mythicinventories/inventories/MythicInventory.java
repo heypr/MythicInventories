@@ -210,10 +210,16 @@ public class MythicInventory implements InventoryHolder {
      * @param skill     The skill to add to the click type.
      */
     public void addClickSkill(int slot, MIClickType clickType, String skill) {
-        HashMap<MIClickType, List<String>> click = new HashMap<>();
-        List<String> skills = new ArrayList<>();
+        HashMap<MIClickType, List<String>> clickMap = clickSkills.get(slot);
+        if (clickMap == null) {
+            clickMap = new HashMap<>();
+        }
+        List<String> skills = clickMap.get(clickType);
+        if (skills == null) {
+            skills = new ArrayList<>();
+        }
         skills.add(skill);
-        click.put(clickType, skills);
-        clickSkills.put(slot, click);
+        clickMap.put(clickType, skills);
+        clickSkills.put(slot, clickMap);
     }
 }
