@@ -8,6 +8,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.*;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
@@ -53,12 +54,14 @@ public class BukkitInventoryEvents implements Listener {
         plugin.getInventorySerializer().saveInventory(inventory, (Player) event.getPlayer());
     }
 
-    private void castSkill(InventoryInteractEvent event, String skill) {
+    private void castSkill(InventoryInteractEvent event, String inputSkill) {
         if (plugin.isMythicMobsEnabled()) {
-            plugin.getMythicInst().getAPIHelper().castSkill(event.getWhoClicked(), skill);
+            io.lumine.mythic.api.skills.Skill skill = plugin.getMythicInst().getSkillManager().getSkill(null, Collections.singleton(inputSkill)).get();
+            io.lumine.mythic.api.skills.SkillMetadata meta = plugin.getMythicInst().getSkillManager().getEventBus().buildSkillMetadata(io.lumine.mythic.core.skills.SkillTriggers.API, new io.lumine.mythic.api.mobs.GenericCaster(io.lumine.mythic.bukkit.BukkitAdapter.adapt(event.getWhoClicked())), io.lumine.mythic.bukkit.BukkitAdapter.adapt(event.getWhoClicked()), io.lumine.mythic.bukkit.BukkitAdapter.adapt(event.getWhoClicked().getLocation()), true);
+            if (skill.isUsable(meta)) skill.execute(meta);
         }
         else {
-            plugin.getLogger().warning("MythicMobs is not enabled! Cannot cast skill: " + skill);
+            plugin.getLogger().warning("MythicMobs was not found! Cannot cast skill: " + inputSkill);
         }
     }
 
