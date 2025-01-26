@@ -2,6 +2,7 @@ package dev.heypr.mythicinventories.inventories;
 
 import dev.heypr.mythicinventories.MythicInventories;
 import dev.heypr.mythicinventories.misc.MIClickType;
+import io.lumine.mythic.api.skills.Skill;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -17,7 +18,6 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.yaml.snakeyaml.error.MarkedYAMLException;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -91,7 +91,7 @@ public class InventoryCreator {
         inventory.setInternalName(inventoryId);
         List<Map<?, ?>> items = inventorySection.getMapList("items");
         for (Map<?, ?> itemData : items) {
-            if (!loadItem(itemData, inventory, size, inventoryId, fillItemExists)) {
+            if (!loadItem(itemData, inventory, size, inventoryId)) {
                 plugin.getLogger().severe("Failed to load item in inventory \"" + inventoryId + "\"!");
             }
         }
@@ -100,7 +100,7 @@ public class InventoryCreator {
         return true;
     }
 
-    private boolean loadItem(Map<?, ?> itemData, MythicInventory inventory, int size, String inventoryId, boolean fillItemAlreadyExists) {
+    private boolean loadItem(Map<?, ?> itemData, MythicInventory inventory, int size, String inventoryId) {
 
         this.inventoryId = inventoryId;
         this.itemData = itemData;
@@ -197,11 +197,11 @@ public class InventoryCreator {
                 }
             }
 
-            Arrays.stream(MIClickType.values()).toList().iterator().forEachRemaining(clickType -> {
-                if (checkValue(clickType.name().toUpperCase())) {
+            for (MIClickType clickType : MIClickType.values()) {
+                if (checkValue(clickType.name().toLowerCase())) {
                     handleClickType(itemData, inventory, clickType, slot);
                 }
-            });
+            }
 
             if (checkValue("item_flags")) {
                 hasItemFlags(itemData, meta, item);
@@ -310,6 +310,7 @@ public class InventoryCreator {
      * @param itemData  The item data.
      * @param inventory The inventory to add the click type to.
      * @param clickType The click type to check.
+     * @param slot      The slot of the item.
      *
      */
     private void handleClickType(Map<?, ?> itemData, MythicInventory inventory, MIClickType clickType, int slot) {

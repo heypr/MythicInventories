@@ -157,28 +157,4 @@ public class BukkitInventoryEvents implements Listener {
     private boolean hasInteractable(MythicInventory inventory) {
         return !inventory.getInteractableItems().isEmpty();
     }
-
-// TODO: fix this shit
-//    private void runCommands(ItemStack item) {
-//        NamespacedKey key = new NamespacedKey(plugin, "commands");
-//        if (!item.getItemMeta().getPersistentDataContainer().has(key, PersistentDataType.STRING)) {
-//            return;
-//        }
-//
-//        String commands = item.getItemMeta().getPersistentDataContainer().get(key, PersistentDataType.STRING);
-//
-//        if (commands == null) {
-//            return;
-//        }
-//
-//        String[] commandList = commands.split(";");
-//        for (String command : commandList) {
-//            try {
-//                plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), command);
-//            }
-//            catch (Exception e) {
-//                plugin.getLogger().warning("Error running command: " + command);
-//            }
-//        }
-//    }
 }

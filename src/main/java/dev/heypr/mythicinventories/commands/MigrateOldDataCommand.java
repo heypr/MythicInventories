@@ -20,11 +20,12 @@ public class MigrateOldDataCommand implements CommandExecutor {
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if (!(sender instanceof Player player)) return true;
 
+        String prefix = "[MythicInventories] ";
         if (args.length == 0) {
-            player.sendMessage("[MythicInventories] This command will migrate old save data to the new format. This is irreversible!");
-            player.sendMessage("[MythicInventories] An error will appear if you attempt to convert modern player data, and may even (albeit unlikely) corrupt it.");
-            player.sendMessage("[MythicInventories] PLEASE MAKE A BACKUP OF THE FILES IN THE 'playerdata' FOLDER BEFORE CONTINUING.");
-            player.sendMessage("[MythicInventories] TYPE /migrateolddata confirm TO CONFIRM.");
+            player.sendMessage(prefix + "This command will migrate old save data to the new format. This is irreversible!");
+            player.sendMessage(prefix + "An error will appear if you attempt to convert modern player data, and may even (albeit unlikely) corrupt it.");
+            player.sendMessage(prefix + "PLEASE MAKE A BACKUP OF THE FILES IN THE 'playerdata' FOLDER BEFORE CONTINUING.");
+            player.sendMessage(prefix + "TYPE /migrateolddata confirm TO CONFIRM.");
             plugin.addPlayer(player.getUniqueId());
 
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
@@ -35,12 +36,12 @@ public class MigrateOldDataCommand implements CommandExecutor {
 
         if (args[0].equalsIgnoreCase("confirm")) {
             if (!plugin.getConfirmationList().contains(player.getUniqueId())) {
-                player.sendMessage("[MythicInventories] You have not confirmed the migration. Please type /migrateolddata to confirm.");
+                player.sendMessage(prefix + "You have not confirmed the migration. Please type /migrateolddata to confirm.");
                 return true;
             }
             plugin.removePlayer(player.getUniqueId());
             plugin.getOldDataConverter().convertData();
-            player.sendMessage("[MythicInventories] Old data has been successfully converted!");
+            player.sendMessage(prefix + "Old data has been successfully converted!");
             return true;
         }
 

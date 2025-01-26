@@ -19,13 +19,20 @@ public class MythicInventory implements InventoryHolder {
     private HashMap<Integer, ItemStack> interactableItems = new HashMap<>();
     private HashMap<Integer, HashMap<MIClickType, List<String>>> clickSkills = new HashMap<>();
 
-
+    /**
+     * Constructor for creating a new inventory.
+     *
+     * @param plugin Instance of the MythicInventories plugin.
+     * @param size   The size of the inventory.
+     * @param title  The title of the inventory.
+     */
     public MythicInventory(MythicInventories plugin, int size, Component title) {
         this.inventory = plugin.getServer().createInventory(this, size, title);
     }
 
     /**
      * Constructor for getting an existing inventory.
+     * <p></p>
      * Do not use this constructor for creating a new inventory.
      *
      * @param plugin       Instance of the MythicInventories plugin.
