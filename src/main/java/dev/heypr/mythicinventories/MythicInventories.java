@@ -1,6 +1,7 @@
 package dev.heypr.mythicinventories;
 
 import dev.heypr.mythicinventories.bstats.Metrics;
+import dev.heypr.mythicinventories.commands.MigrateOldDataCommand;
 import dev.heypr.mythicinventories.commands.OpenInventoryCommand;
 import dev.heypr.mythicinventories.commands.OpenInventoryTabCompleter;
 import dev.heypr.mythicinventories.events.BukkitInventoryEvents;
@@ -8,21 +9,26 @@ import dev.heypr.mythicinventories.events.MythicMobEvents;
 import dev.heypr.mythicinventories.inventories.InventoryCreator;
 import dev.heypr.mythicinventories.inventories.MythicInventory;
 import dev.heypr.mythicinventories.storage.MythicInventorySerializer;
+import dev.heypr.mythicinventories.updater.OldDataConverter;
 import org.bukkit.Bukkit;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
 
 public final class MythicInventories extends JavaPlugin implements Listener {
 
     // Format: internal inventory name -> MythicInventory object
     private final HashMap<String, MythicInventory> inventories = new HashMap<>();
+    private List<UUID> confirmationList = new ArrayList<>();
 
     @Override
     public void onEnable() {
+        getCommand("migrateolddata").setExecutor(new MigrateOldDataCommand(this));
         getCommand("mythicinventoryopen").setExecutor(new OpenInventoryCommand(this));
         getCommand("mythicinventoryopen").setTabCompleter(new OpenInventoryTabCompleter(this));
 
@@ -64,11 +70,19 @@ public final class MythicInventories extends JavaPlugin implements Listener {
     }
 
     /**
+     * Get the old data converter.
+     * @return The old data converter.
+     */
+    public OldDataConverter getOldDataConverter() {
+        return new OldDataConverter(this);
+    }
+
+    /**
      * Reload all inventories.
      */
     public void reloadInventories() {
         inventories.clear();
-        new InventoryCreator(this).loadInventories();
+        new InventoryCreator(this).createInventories();
     }
 
     /**
@@ -90,6 +104,15 @@ public final class MythicInventories extends JavaPlugin implements Listener {
     }
 
     /**
+     * Get an inventory by its internal name.
+     * @param inventoryId The internal name of the inventory.
+     * @return The inventory with the given internal name.
+     */
+    public MythicInventory getInventory(String inventoryId) {
+        return inventories.get(inventoryId);
+    }
+
+    /**
      * Get a list of all inventory names.
      * @return A list of all inventory names.
      */
@@ -106,10 +129,44 @@ public final class MythicInventories extends JavaPlugin implements Listener {
         inventories.put(inventoryId, inventory);
     }
 
+    /**
+     * Get the confirmation list.
+     * @return The confirmation list.
+     */
+    public List<UUID> getConfirmationList() {
+        return confirmationList;
+    }
+
+    /**
+     * Add a player to the confirmation list.
+     * @param player The player to add.
+     */
+    public void addPlayer(UUID player) {
+        if (!confirmationList.contains(player)) {
+            confirmationList.add(player);
+        }
+    }
+
+    /**
+     * Remove a player from the confirmation list.
+     * @param player The player to remove.
+     */
+    public void removePlayer(UUID player) {
+        confirmationList.remove(player);
+    }
+
+    /**
+     * Check if MythicMobs is enabled.
+     * @return True if MythicMobs is enabled, false otherwise.
+     */
     public boolean isMythicMobsEnabled() {
         return getServer().getPluginManager().isPluginEnabled("MythicMobs");
     }
 
+    /**
+     * Get the MythicBukkit instance.
+     * @return The MythicBukkit instance.
+     */
     public io.lumine.mythic.bukkit.MythicBukkit getMythicInst() {
         return io.lumine.mythic.bukkit.MythicBukkit.inst();
     }

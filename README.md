@@ -25,14 +25,16 @@ my_first_inventory:
     - name: "<black>"
       type: black_stained_glass_pane
       fill_item: true
-    - name: "<red>Summon lightning strike"
-      type: skeleton_skull
+    - name: "<red>Summon explosion and particles"
+      type: potato
       slot: 23
       lore:
       - "<red>lorem ipsum something something"
       - "<blue>Woo: <gradient>||||||||||||||||||||||||</gradient>!"
-      mm_skill: lightning_skill
-      click_type: shift_left_click
+      left_click:
+      - effect:explosion @Self
+      drop:
+      - effect:particles{p=happyVillager;amount=1000;hSpread=15;ySpread=1;speed=0;yOffset=0.5} @Self
       save: false
       interactable: false
 ```
@@ -75,19 +77,18 @@ default, and is optional.
 
 - The `save` option is for setting whether the item should be saved. It is `false` by default, and is optional.
 
+The following are the varying click types that you can have MythicInventories listen for to run a skill:
+  - `left_click`
+  - `right_click`
+  - `shift_left_click`
+  - `shift_right_click`
+  - `middle_click`
+  - `shift_middle_click`
+  - `drop`
+  - `hotbar_swap`
 
-- The `click_type` option is for setting the click type for the item. It is not set by default, and is optional.
-Make sure to set this value to a valid click type if you want a skill to be executed when the item is clicked.
-Valid click types are as follows: 
-  - `LEFT_CLICK`
-  - `RIGHT_CLICK`
-  - `SHIFT_LEFT_CLICK`
-  - `SHIFT_RIGHT_CLICK`
-  - `MIDDLE_CLICK`
-  - `SHIFT_MIDDLE_CLICK`
-  - `DROP`
-  - `HOTBAR_SWAP`
-
+Each item can have multiple click types, each click type can have multiple skills, and each skill is limited only by what you can do with MythicMobs skills.
+See the above example inventory for a basic layout of how to set up a skill.
 
 - The `item_flags` option is for setting flags on the item. It is empty by default, and is optional.
 Valid values for item flags are as follows:
@@ -102,7 +103,8 @@ Valid values for item flags are as follows:
   - `HIDE_STORED_ENCHANTS`;
 
 ## Commands
-| Command                              | Description                                                                                               | Permission                             | Aliases                                  |
-|--------------------------------------|-----------------------------------------------------------------------------------------------------------|----------------------------------------|------------------------------------------|
-| `mythicinventoryopen <inventory_id> [player]` | Opens the specified inventory for yourself or a target player if specified.                               | `mythicinventories.open.<inventory_id>` | `mio`, `miopen`, `mythicio`              |
-| `mythicinventoryreload`              | Updates and reloads all inventories.                                                                      | `mythicinventories.reload`             | `mir`, `mireload`, `mythicireload`       |
+| Command                                       | Description                                                                 | Permission                              | Aliases                            |
+|-----------------------------------------------|-----------------------------------------------------------------------------|-----------------------------------------|------------------------------------|
+| `mythicinventoryopen <inventory_id> [player]` | Opens the specified inventory for yourself or a target player if specified. | `mythicinventories.open.<inventory_id>` | `mio`, `miopen`, `mythicio`        |
+| `mythicinventoryreload`                       | Updates and reloads all inventories.                                        | `mythicinventories.reload`              | `mir`, `mireload`, `mythicireload` |
+| `migrateolddata`                              | Migrates your old save data from <0.7.0 versions of the plugin.             | `mythicinventories.migrate`             | `migrateold`, `migrate`            |

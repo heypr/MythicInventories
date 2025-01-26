@@ -1,8 +1,11 @@
 package dev.heypr.mythicinventories.storage;
 
-import com.google.gson.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 import dev.heypr.mythicinventories.MythicInventories;
 import dev.heypr.mythicinventories.inventories.MythicInventory;
+import org.apache.commons.codec.binary.Base64;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
@@ -10,6 +13,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.*;
 
 public class MythicInventorySerializer {
@@ -33,19 +37,36 @@ public class MythicInventorySerializer {
     }
 
     /**
+     * Gets a list of player data files.
+     * @return A list of player data files.
+     */
+    public List<File> getPlayerDataFiles() {
+        File playerDataDir = new File(plugin.getDataFolder(), "playerdata");
+        if (!playerDataDir.exists()) {
+            return Collections.emptyList();
+        }
+
+        File[] files = playerDataDir.listFiles();
+        if (files == null || files.length == 0) {
+            return Collections.emptyList();
+        }
+
+        return Arrays.asList(files);
+    }
+
+    /**
      * Serialize the inventory to JSON.
      */
     public String serializeToJson(MythicInventory inventory) {
-        List<Map<String, Object>> inventoryData = new ArrayList<>();
+        HashMap<Integer, String> inventoryData = new HashMap<>();
         for (int i = 0; i < inventory.getInventory().getSize(); i++) {
             ItemStack item = inventory.getInventory().getItem(i);
             if (item == null) continue;
             if (!inventory.getSavedItems().contains(i)) continue;
             try {
-                HashMap<String, Object> itemData = new HashMap<>();
-                itemData.put("slot", i);
-                itemData.put("item", item.serialize());
-                inventoryData.add(itemData);
+                byte[] serialized = item.serializeAsBytes();
+                String encoded = Base64.encodeBase64String(serialized);
+                inventoryData.put(i, encoded);
             }
             catch (Exception e) {
                 plugin.getLogger().severe("Failed to serialize item in slot " + i + ": " + e.getMessage());
@@ -62,21 +83,16 @@ public class MythicInventorySerializer {
      */
     public MythicInventory deserializeInventoryFromJson(File file, String inventoryInternalName) {
         try (FileReader reader = new FileReader(file)) {
-            JsonArray jsonArray = gson.fromJson(reader, JsonArray.class);
-
             MythicInventory inventory = new MythicInventory(plugin, inventoryInternalName);
 
-            for (JsonElement element : jsonArray) {
-                JsonObject obj = element.getAsJsonObject();
-                int slot = obj.get("slot").getAsInt();
-                JsonObject itemObj = obj.getAsJsonObject("item");
+            Type hashMapType = new TypeToken<HashMap<Integer, String>>() {}.getType();
 
-                Map<String, Object> itemData = gson.fromJson(itemObj, Map.class);
-                ItemStack item = ItemStack.deserialize(itemData);
-
-                inventory.setItem(slot, item);
+            HashMap<Integer, String> map = gson.fromJson(reader, hashMapType);
+            for (Integer slot : map.keySet()) {
+                byte[] decoded = Base64.decodeBase64(map.get(slot));
+                ItemStack deserialized = ItemStack.deserializeBytes(decoded);
+                inventory.setItem(slot, deserialized);
             }
-
             return inventory;
         }
         catch (IOException e) {
@@ -84,12 +100,11 @@ public class MythicInventorySerializer {
             return null;
         }
         catch (Exception e) {
+            plugin.getLogger().severe("If you have just recently updated, please run the \"/migrateolddata\" command!");
             plugin.getLogger().severe("An error occurred while deserializing inventory: " + e.getMessage());
             return null;
         }
     }
-
-
 
     /**
      * Save inventory to a JSON file in the player's directory.
@@ -97,9 +112,18 @@ public class MythicInventorySerializer {
      * @param player The player to save the inventory for.
      */
     public void saveInventory(MythicInventory inventory, Player player) {
-        File playerDir = new File(plugin.getDataFolder(), "playerdata/" + player.getUniqueId());
+        saveInventory(inventory, player.getUniqueId());
+    }
+
+    /**
+     * Save inventory to a JSON file in the player's directory.
+     * @param inventory The inventory to save.
+     * @param uuid The player to save the inventory for.
+     */
+    public void saveInventory(MythicInventory inventory, UUID uuid) {
+        File playerDir = new File(plugin.getDataFolder(), "playerdata/" + uuid);
         if (!playerDir.exists() && !playerDir.mkdirs()) {
-            plugin.getLogger().severe("Failed to create directory for player: " + player.getUniqueId());
+            plugin.getLogger().severe("Failed to create directory for player: " + uuid);
             return;
         }
 

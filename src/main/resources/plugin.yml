@@ -22,3 +22,10 @@ commands:
       - mir
       - mireload
       - mythicireload
+  migrateolddata:
+    description: Migrate old player data
+    usage: /migrateolddata
+    permission: mythicinventories.migrate
+    aliases:
+      - migrateold
+      - migrate
