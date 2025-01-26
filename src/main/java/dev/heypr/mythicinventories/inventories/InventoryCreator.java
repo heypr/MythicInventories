@@ -2,12 +2,12 @@ package dev.heypr.mythicinventories.inventories;
 
 import dev.heypr.mythicinventories.MythicInventories;
 import dev.heypr.mythicinventories.misc.MIClickType;
-import io.lumine.mythic.api.skills.Skill;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -20,7 +20,6 @@ import org.yaml.snakeyaml.error.MarkedYAMLException;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.logging.Level;
 
 public class InventoryCreator {
@@ -317,21 +316,22 @@ public class InventoryCreator {
         String clickTypeKey = clickType.name().toLowerCase();
         Object clickTypeValue = itemData.get(clickTypeKey);
 
-        if (clickTypeValue instanceof List<?> clickTypeValueList && plugin.isMythicMobsEnabled()) {
-            for (Object value : clickTypeValueList) {
-                if (!(value instanceof String)) {
-                    plugin.getLogger().severe("Invalid skill value in click_type list for key \"" + clickTypeKey + "\" in inventory \"" + inventoryId + "\"!");
-                    continue;
-                }
-                Optional<io.lumine.mythic.api.skills.Skill> skill = plugin.getMythicInst().getSkillManager().getSkill(value.toString());
-                if (skill.isEmpty()) {
-                    plugin.getLogger().severe("Invalid skill \"" + value + "\" in inventory \"" + inventoryId + "\"!");
-                    continue;
-                }
-                inventory.addClickSkill(slot, clickType, value.toString());
-            }
+        if (!plugin.isMythicMobsEnabled()) {
+            plugin.getLogger().severe("MythicMobs is not enabled! Cannot set click type to: " + clickTypeKey);
+            return;
         }
+
+        if (!(clickTypeValue instanceof List<?> clickTypeValueList)) {
+            plugin.getLogger().severe("Invalid or missing click_type list for key \"" + clickTypeKey + "\" in inventory \"" + inventoryId + "\"!");
+            return;
+        }
+
+        clickTypeValueList.stream()
+                .filter(value -> value instanceof String)
+                .map(Object::toString)
+                .forEach(skillName -> inventory.addClickSkill(slot, clickType, skillName));
     }
+
 
     /**
      * Checks if the item has item flags.
