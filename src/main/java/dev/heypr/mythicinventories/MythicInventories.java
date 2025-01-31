@@ -10,6 +10,7 @@ import dev.heypr.mythicinventories.inventories.InventoryCreator;
 import dev.heypr.mythicinventories.inventories.MythicInventory;
 import dev.heypr.mythicinventories.storage.MythicInventorySerializer;
 import dev.heypr.mythicinventories.updater.OldDataConverter;
+import io.lumine.mythic.bukkit.MythicBukkit;
 import org.bukkit.Bukkit;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -25,9 +26,16 @@ public final class MythicInventories extends JavaPlugin implements Listener {
     // Format: internal inventory name -> MythicInventory object
     private final HashMap<String, MythicInventory> inventories = new HashMap<>();
     private List<UUID> confirmationList = new ArrayList<>();
+    private boolean isPaperServer = false;
 
     @Override
     public void onEnable() {
+        try {
+            Class.forName("com.destroystokyo.paper.event.player.PlayerSetSpawnEvent");
+            isPaperServer = true;
+        }
+        catch (ClassNotFoundException ignored) {}
+
         getCommand("migrateolddata").setExecutor(new MigrateOldDataCommand(this));
         getCommand("mythicinventoryopen").setExecutor(new OpenInventoryCommand(this));
         getCommand("mythicinventoryopen").setTabCompleter(new OpenInventoryTabCompleter(this));
@@ -167,7 +175,15 @@ public final class MythicInventories extends JavaPlugin implements Listener {
      * Get the MythicBukkit instance.
      * @return The MythicBukkit instance.
      */
-    public io.lumine.mythic.bukkit.MythicBukkit getMythicInst() {
-        return io.lumine.mythic.bukkit.MythicBukkit.inst();
+    public MythicBukkit getMythicInst() {
+        return MythicBukkit.inst();
+    }
+
+    /**
+     * Check if the server is running Paper.
+     * @return True if the server is running Paper, false otherwise.
+     */
+    public boolean isPaperServer() {
+        return isPaperServer;
     }
 }

@@ -2,12 +2,12 @@ package dev.heypr.mythicinventories.inventories;
 
 import dev.heypr.mythicinventories.MythicInventories;
 import dev.heypr.mythicinventories.misc.MIClickType;
+import io.lumine.mythic.bukkit.BukkitAdapter;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -154,7 +154,7 @@ public class InventoryCreator {
                         plugin.getLogger().severe("Invalid MythicMobs item \"" + type + "\" in inventory \"" + inventoryId + "\"!");
                         return false;
                     }
-                    item = io.lumine.mythic.bukkit.BukkitAdapter.adapt(plugin.getMythicInst().getItemManager().getItem(type).get().generateItemStack(1));
+                    item = BukkitAdapter.adapt(plugin.getMythicInst().getItemManager().getItem(type).get().generateItemStack(1));
                 }
                 else {
                     plugin.getLogger().severe("MythicMobs is not enabled! Cannot set item type to: " + type);
@@ -211,7 +211,12 @@ public class InventoryCreator {
             }
 
             if (checkValue("save")) {
-                shouldSave(itemData, slot, inventory);
+                if (plugin.isPaperServer()) {
+                    shouldSave(itemData, slot, inventory);
+                }
+                else {
+                    plugin.getLogger().severe("Due to the way that items are internally saved, the 'save' option is only available on Paper servers!");
+                }
             }
 
             item.setItemMeta(meta);

@@ -3,6 +3,11 @@ package dev.heypr.mythicinventories.events;
 import dev.heypr.mythicinventories.MythicInventories;
 import dev.heypr.mythicinventories.inventories.MythicInventory;
 import dev.heypr.mythicinventories.misc.MIClickType;
+import io.lumine.mythic.api.mobs.GenericCaster;
+import io.lumine.mythic.api.skills.Skill;
+import io.lumine.mythic.api.skills.SkillMetadata;
+import io.lumine.mythic.bukkit.BukkitAdapter;
+import io.lumine.mythic.core.skills.SkillTriggers;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -56,8 +61,8 @@ public class BukkitInventoryEvents implements Listener {
 
     private void castSkill(InventoryInteractEvent event, String inputSkill) {
         if (plugin.isMythicMobsEnabled()) {
-            io.lumine.mythic.api.skills.Skill skill = plugin.getMythicInst().getSkillManager().getSkill(null, Collections.singleton(inputSkill)).get();
-            io.lumine.mythic.api.skills.SkillMetadata meta = plugin.getMythicInst().getSkillManager().getEventBus().buildSkillMetadata(io.lumine.mythic.core.skills.SkillTriggers.API, new io.lumine.mythic.api.mobs.GenericCaster(io.lumine.mythic.bukkit.BukkitAdapter.adapt(event.getWhoClicked())), io.lumine.mythic.bukkit.BukkitAdapter.adapt(event.getWhoClicked()), io.lumine.mythic.bukkit.BukkitAdapter.adapt(event.getWhoClicked().getLocation()), true);
+            Skill skill = plugin.getMythicInst().getSkillManager().getSkill(null, Collections.singleton(inputSkill)).get();
+            SkillMetadata meta = plugin.getMythicInst().getSkillManager().getEventBus().buildSkillMetadata(SkillTriggers.API, new GenericCaster(BukkitAdapter.adapt(event.getWhoClicked())), BukkitAdapter.adapt(event.getWhoClicked()), BukkitAdapter.adapt(event.getWhoClicked().getLocation()), true);
             if (skill.isUsable(meta)) skill.execute(meta);
         }
         else {
