@@ -1,7 +1,7 @@
 package dev.heypr.mythicinventories.inventories;
 
 import dev.heypr.mythicinventories.MythicInventories;
-import dev.heypr.mythicinventories.misc.MIClickType;
+import dev.heypr.mythicinventories.util.MIClickType;
 import net.kyori.adventure.text.Component;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
@@ -13,11 +13,21 @@ import java.util.*;
 
 public class MythicInventory implements InventoryHolder {
 
+    private final HashMap<Integer, TrinketConfig> trinketSlots = new HashMap<>();
     private final Inventory inventory;
     private String internalName;
     private Set<Integer> savedItems = new HashSet<>();
     private HashMap<Integer, ItemStack> interactableItems = new HashMap<>();
     private HashMap<Integer, HashMap<MIClickType, List<String>>> clickSkills = new HashMap<>();
+
+    /**
+     * Configuration data for a specialized trinket slot.
+     * @param skill The MythicMobs skill name to execute.
+     * @param interval The execution interval in ticks, due to inconsistencies on mythic's side of things, this is handled incorrectly when called via the getInt method.
+     * @param uses The maximum number of skill uses (-1 for infinite).
+     * @param initialItemDisappears True if the configured placeholder item should be removed when a trinket is placed.
+     */
+    public record TrinketConfig(String skill, String interval, String uses, boolean initialItemDisappears) { }
 
     /**
      * Constructor for creating a new inventory.
@@ -40,6 +50,37 @@ public class MythicInventory implements InventoryHolder {
      */
     public MythicInventory(MythicInventories plugin, String internalName) {
         this.inventory = plugin.getInventories().get(internalName).getInventory();
+    }
+
+    /**
+     * Checks if a specific slot is configured as a trinket slot.
+     *
+     * @param slot The slot index to check.
+     * @return True if the slot is a trinket slot.
+     */
+    public boolean isTrinketSlot(int slot) {
+        return trinketSlots.containsKey(slot);
+    }
+
+    /**
+     * Get the configuration for a trinket slot.
+     *
+     * @param slot The slot index.
+     * @return The {@link TrinketConfig} or null if the slot is not a trinket slot.
+     */
+    @Nullable
+    public TrinketConfig getTrinketSlotConfig(int slot) {
+        return trinketSlots.get(slot);
+    }
+
+    /**
+     * Registers a slot as a trinket slot with its specific configuration.
+     *
+     * @param slot The slot index.
+     * @param config The {@link TrinketConfig} object.
+     */
+    public void addTrinketSlot(int slot, TrinketConfig config) {
+        trinketSlots.put(slot, config);
     }
 
     @NotNull

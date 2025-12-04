@@ -1,0 +1,19 @@
+my_first_inventory:
+  name: "<green>My <blue>Epic &cInventory"
+  size: 45
+  items:
+    - name: "<black>"
+      type: black_stained_glass_pane
+      fill_item: true
+    - name: "<red>Summon explosion and particles"
+      type: potato
+      slot: 23
+      lore:
+        - "<red>lorem ipsum something something"
+        - "<blue>Woo: <gradient>||||||||||||||||||||||||</gradient>!"
+      left_click:
+        - effect:explosion @Self
+      drop:
+        - effect:particles{p=happyVillager;amount=1000;hSpread=15;ySpread=1;speed=0;yOffset=0.5} @Self
+      save: false
+      interactable: false

@@ -1,7 +1,6 @@
 package dev.heypr.mythicinventories;
 
 import dev.heypr.mythicinventories.bstats.Metrics;
-import dev.heypr.mythicinventories.commands.MigrateOldDataCommand;
 import dev.heypr.mythicinventories.commands.OpenInventoryCommand;
 import dev.heypr.mythicinventories.commands.OpenInventoryTabCompleter;
 import dev.heypr.mythicinventories.events.BukkitInventoryEvents;
@@ -9,23 +8,31 @@ import dev.heypr.mythicinventories.events.MythicMobEvents;
 import dev.heypr.mythicinventories.inventories.InventoryCreator;
 import dev.heypr.mythicinventories.inventories.MythicInventory;
 import dev.heypr.mythicinventories.storage.MythicInventorySerializer;
-import dev.heypr.mythicinventories.updater.OldDataConverter;
+import dev.heypr.mythicinventories.util.TrinketScheduler;
+import io.lumine.mythic.api.mobs.GenericCaster;
+import io.lumine.mythic.api.skills.Skill;
+import io.lumine.mythic.api.skills.SkillMetadata;
+import io.lumine.mythic.bukkit.BukkitAdapter;
 import io.lumine.mythic.bukkit.MythicBukkit;
+import io.lumine.mythic.core.skills.SkillTriggers;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.UUID;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class MythicInventories extends JavaPlugin implements Listener {
 
     // Format: internal inventory name -> MythicInventory object
     private final HashMap<String, MythicInventory> inventories = new HashMap<>();
-    private List<UUID> confirmationList = new ArrayList<>();
+    private final ConcurrentHashMap<UUID, Skill> cachedItemMythicSkills = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<UUID, Skill> cachedTrinketMythicSkills = new ConcurrentHashMap<>();
+
+    private TrinketScheduler trinketScheduler;
     private boolean isPaperServer = false;
 
     @Override
@@ -35,8 +42,6 @@ public final class MythicInventories extends JavaPlugin implements Listener {
             isPaperServer = true;
         }
         catch (ClassNotFoundException ignored) {}
-
-        getCommand("migrateolddata").setExecutor(new MigrateOldDataCommand(this));
         getCommand("mythicinventoryopen").setExecutor(new OpenInventoryCommand(this));
         getCommand("mythicinventoryopen").setTabCompleter(new OpenInventoryTabCompleter(this));
 
@@ -47,6 +52,7 @@ public final class MythicInventories extends JavaPlugin implements Listener {
         });
 
         Bukkit.getPluginManager().registerEvents(new BukkitInventoryEvents(this), this);
+        this.trinketScheduler = new TrinketScheduler(this);
 
         if (!isMythicMobsEnabled()) {
             getLogger().warning("MythicMobs was not found! MythicInventories will have reduced functionality.");
@@ -65,8 +71,64 @@ public final class MythicInventories extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
+        trinketScheduler.stopAllTrinketSkillTasks();
+        cachedTrinketMythicSkills.clear();
+        cachedItemMythicSkills.clear();
         inventories.clear();
         getLogger().info("MythicInventories disabled!");
+    }
+
+    public Skill getFromItemSkillCache(UUID keyName) {
+        if (!isMythicMobsEnabled()) return null;
+        return cachedItemMythicSkills.get(keyName);
+    }
+
+    public void addToItemSkillCache(UUID skillConverted, String skillName) {
+        if (getFromItemSkillCache(skillConverted) == null) {
+            Skill finalSkill = getMythicInst().getSkillManager().getSkill(null, Collections.singleton(skillName)).get();
+            cachedItemMythicSkills.put(skillConverted, finalSkill);
+        }
+    }
+
+    public void addToTrinketSkillCache(UUID skillConverted, String skillName) {
+        if (getFromTrinketSkillCache(skillConverted) == null) {
+            Skill finalSkill = getMythicInst().getSkillManager().getSkill(null, Collections.singleton(skillName)).get();
+            cachedTrinketMythicSkills.put(skillConverted, finalSkill);
+        }
+    }
+
+    public Skill getFromTrinketSkillCache(UUID keyName) {
+        if (!isMythicMobsEnabled()) return null;
+        return cachedTrinketMythicSkills.get(keyName);
+    }
+
+    public void executeMythicSkill(Player player, String skillName) {
+        if (!isMythicMobsEnabled()) {
+            getLogger().severe("Attempted to execute skill '" + skillName + "' but MythicMobs is disabled.");
+            return;
+        }
+        UUID skillUUID = UUID.nameUUIDFromBytes(skillName.getBytes(StandardCharsets.UTF_8));
+        Skill skill = getFromItemSkillCache(skillUUID);
+
+        if (skill == null) {
+            getLogger().severe("Skill '" + skillName + "' not found!");
+            return;
+        }
+
+        GenericCaster caster = new GenericCaster(BukkitAdapter.adapt(player));
+        SkillMetadata meta = getMythicInst().getSkillManager().getEventBus().buildSkillMetadata(SkillTriggers.API, caster, BukkitAdapter.adapt(player), BukkitAdapter.adapt(player.getLocation()), true);
+
+        if (skill.isUsable(meta)) {
+            skill.execute(meta);
+        }
+    }
+
+    /**
+     * Get the trinket scheduler.
+     * @return The trinket scheduler.
+     */
+    public TrinketScheduler getTrinketScheduler() {
+        return trinketScheduler;
     }
 
     /**
@@ -78,17 +140,12 @@ public final class MythicInventories extends JavaPlugin implements Listener {
     }
 
     /**
-     * Get the old data converter.
-     * @return The old data converter.
-     */
-    public OldDataConverter getOldDataConverter() {
-        return new OldDataConverter(this);
-    }
-
-    /**
      * Reload all inventories.
      */
     public void reloadInventories() {
+        trinketScheduler.stopAllTrinketSkillTasks();
+        cachedTrinketMythicSkills.clear();
+        cachedItemMythicSkills.clear();
         inventories.clear();
         new InventoryCreator(this).createInventories();
     }
@@ -135,32 +192,6 @@ public final class MythicInventories extends JavaPlugin implements Listener {
      */
     public void addInventory(MythicInventory inventory, String inventoryId) {
         inventories.put(inventoryId, inventory);
-    }
-
-    /**
-     * Get the confirmation list.
-     * @return The confirmation list.
-     */
-    public List<UUID> getConfirmationList() {
-        return confirmationList;
-    }
-
-    /**
-     * Add a player to the confirmation list.
-     * @param player The player to add.
-     */
-    public void addPlayer(UUID player) {
-        if (!confirmationList.contains(player)) {
-            confirmationList.add(player);
-        }
-    }
-
-    /**
-     * Remove a player from the confirmation list.
-     * @param player The player to remove.
-     */
-    public void removePlayer(UUID player) {
-        confirmationList.remove(player);
     }
 
     /**
