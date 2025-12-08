@@ -92,10 +92,6 @@ It is required.
 The `lore` option is for setting the lore of the item.
 It is optional.
 ---
-The `gui` option is for setting whether all items in the inventory can be picked up and manipulated. 
-It is `true` by default. Do note, that enabling this option will *not* allow players to modify anything in the 
-inventory unless explicitly set through the `interactable` option (see below).
----
 The `fill_item` option is for items that need to fill the inventory.
 It is `false` by default, and is optional. Please note that only one item can be a fill item.
 ---

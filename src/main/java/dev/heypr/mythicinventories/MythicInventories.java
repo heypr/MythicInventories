@@ -159,9 +159,6 @@ public final class MythicInventories extends JavaPlugin implements Listener {
                 MythicInventory.TrinketConfig cachedConfig = cachedTrinketConfigs.get(cacheId);
 
                 if (cachedConfig != null) {
-                    if (cachedConfig.skill().equals("DUMMY_SKILL")) {
-                        return null;
-                    }
                     return cachedConfig;
                 }
             }
@@ -180,16 +177,12 @@ public final class MythicInventories extends JavaPlugin implements Listener {
 
         Optional<MythicItem> itemOptional = getMythicInst().getItemManager().getItem(mythicId);
         if (itemOptional.isEmpty()) {
-            MythicInventory.TrinketConfig dummyConfig = new MythicInventory.TrinketConfig("DUMMY_SKILL", "100", "-1", false);
-            cachedTrinketConfigs.put(newCacheKey, dummyConfig);
             return null;
         }
 
         MythicConfig mmConfig = itemOptional.get().getConfig().getNestedConfig("Trinket");
 
         if (mmConfig == null) {
-            MythicInventory.TrinketConfig dummyConfig = new MythicInventory.TrinketConfig("DUMMY_SKILL", "100", "-1", false);
-            cachedTrinketConfigs.put(newCacheKey, dummyConfig);
             return null;
         }
 
@@ -200,22 +193,16 @@ public final class MythicInventories extends JavaPlugin implements Listener {
         boolean hasAttributes = mmConfig.isConfigurationSection("attributes");
 
         if (skill.equalsIgnoreCase("NO_SKILL") && !hasAttributes) {
-            MythicInventory.TrinketConfig dummyConfig = new MythicInventory.TrinketConfig("DUMMY_SKILL", "100", "-1", disappears);
-            cachedTrinketConfigs.put(newCacheKey, dummyConfig);
             return null;
         }
 
         if (!skill.equalsIgnoreCase("NO_SKILL")) {
             try {
                 if (Integer.parseInt(interval) <= 0) {
-                    MythicInventory.TrinketConfig dummyConfig = new MythicInventory.TrinketConfig("DUMMY_SKILL", "100", "-1", disappears);
-                    cachedTrinketConfigs.put(newCacheKey, dummyConfig);
                     return null;
                 }
             }
             catch (NumberFormatException e) {
-                MythicInventory.TrinketConfig dummyConfig = new MythicInventory.TrinketConfig("DUMMY_SKILL", "100", "-1", disappears);
-                cachedTrinketConfigs.put(newCacheKey, dummyConfig);
                 return null;
             }
         }

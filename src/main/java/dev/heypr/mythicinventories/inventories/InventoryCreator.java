@@ -148,7 +148,7 @@ public class InventoryCreator {
 
         }
         catch (Exception e) {
-            plugin.getLogger().log(Level.SEVERE, "Error parsing item in inventory \"" + inventoryId + "\": " + e.getMessage(), e);
+            plugin.getLogger().severe("Error parsing item in inventory \"" + inventoryId + "\": " + e.getMessage());
             return false;
         }
         return true;

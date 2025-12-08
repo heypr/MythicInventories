@@ -2,15 +2,7 @@ package dev.heypr.mythicinventories.util;
 
 import dev.heypr.mythicinventories.MythicInventories;
 import io.lumine.mythic.api.config.MythicConfig;
-import io.lumine.mythic.bukkit.BukkitAdapter;
-import io.lumine.mythic.bukkit.MythicBukkit;
-import io.lumine.mythic.bukkit.utils.profiles.Profile;
 import io.lumine.mythic.core.items.MythicItem;
-import io.lumine.mythic.core.players.PlayerData;
-import io.lumine.mythic.core.skills.stats.StatRegistry;
-import io.lumine.mythic.core.skills.stats.StatSource;
-import io.lumine.mythic.core.skills.stats.StatType;
-import io.lumine.mythic.core.utils.annotations.MythicStat;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.attribute.AttributeModifier;
@@ -81,8 +73,6 @@ public class AttributeManager {
         for (Map.Entry<String, MythicConfig> entry : attributeConfigs.entrySet()) {
             String attributeName = entry.getKey();
             MythicConfig modifierConfig = entry.getValue();
-            Optional<StatType> stat = plugin.getMythicInst().getStatManager().getStat("stick");
-            plugin.getMythicInst().getPlayerManager().getProfile(player).getStatRegistry().putBaseValue(stat.get(), 10);
 
             Attribute attribute = getAttribute(attributeName);
             if (attribute == null) continue;

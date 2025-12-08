@@ -13,6 +13,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 public class MythicMobEvents implements Listener {
@@ -60,7 +61,7 @@ public class MythicMobEvents implements Listener {
         boolean disappears = mmConfig.getBoolean("initial_item_disappears", false);
 
         MythicInventory.TrinketConfig finalConfig = new MythicInventory.TrinketConfig(skill, interval, uses, disappears);
-        UUID cacheId = UUID.randomUUID();
+        UUID cacheId = UUID.nameUUIDFromBytes(skill.getBytes(StandardCharsets.UTF_8));
         plugin.addToTrinketConfigCache(cacheId, finalConfig);
 
         meta.getPersistentDataContainer().set(plugin.getTrinketCacheKey(), PersistentDataType.STRING, cacheId.toString());

@@ -40,7 +40,6 @@ public class TrinketScheduler {
         UUID skillUUID = UUID.nameUUIDFromBytes(keyStr.getBytes(StandardCharsets.UTF_8));
         Skill skill = plugin.getFromTrinketSkillCache(skillUUID);
         if (skill == null) {
-            plugin.getLogger().severe("Could not start trinket task for " + config.skill() + ": skill is invalid or not found.");
             return;
         }
 
@@ -53,7 +52,6 @@ public class TrinketScheduler {
 
     public void stopTrinketSkillTask(Player player, int slot) {
         UUID playerID = player.getUniqueId();
-
         runningTrinketTasks.computeIfPresent(playerID, (uuid, slotMap) -> {
             BukkitTask task = slotMap.remove(slot);
             if (task != null && !task.isCancelled()) {
@@ -74,7 +72,6 @@ public class TrinketScheduler {
                     task.cancel();
                 }
             });
-            plugin.getLogger().info("Stopped all running trinket skill tasks for " + player.getName());
         }
     }
 

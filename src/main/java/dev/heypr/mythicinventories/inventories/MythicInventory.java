@@ -19,7 +19,6 @@ public class MythicInventory implements InventoryHolder {
     private final Set<Integer> savedItems = new HashSet<>();
     private final Inventory inventory;
     private String internalName;
-    private boolean isGui;
 
     /**
      * Configuration data for a specialized trinket slot.
@@ -94,14 +93,6 @@ public class MythicInventory implements InventoryHolder {
      */
     public void setInternalName(String internalName) {
         this.internalName = internalName;
-    }
-
-    public boolean isGui() {
-        return isGui;
-    }
-
-    public void setIsGui(boolean gui) {
-        this.isGui = gui;
     }
 
     /**

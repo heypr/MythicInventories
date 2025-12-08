@@ -99,7 +99,6 @@ public class BukkitInventoryEvents implements Listener {
                 }
                 return;
             }
-
             else if (clickedItem != null && clickedItem.getType() != Material.AIR && event.getClickedInventory().equals(inventory.getInventory())) {
                 if (inventory.getInteractableItems().containsKey(slot) && inventory.getInteractableItems().get(slot).isSimilar(clickedItem)) {
                     event.setCancelled(true);
