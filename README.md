@@ -70,36 +70,45 @@ my_first_inventory:
       save: true
       interactable: true
 ```
----
+
 Options
 ---
 The `name` option is for setting the name of the inventory or the item.
 It is not required on either. If not set on the inventory, the name will default to "Container" and if not set on the 
 item, it will default to the item's material type.
+
 ---
 The `size` option is for setting the size of the inventory.
 It is optional, and should be a multiple of 9 and greater than 0. If it is not specified, it will be set to 9 by default.
+
 ---
 The `items` option is for setting the items in the inventory.
 Ideally you should add items to your inventory.
+
 ---
 The `type` option is for setting the material type of the item.
 It is required.
+
 ---
 The `slot` option is for setting the slot of the item.
 It is required.
+
 ---
 The `lore` option is for setting the lore of the item.
 It is optional.
+
 ---
 The `fill_item` option is for items that need to fill the inventory.
 It is `false` by default, and is optional. Please note that only one item can be a fill item.
+
 ---
 The `interactable` option is for setting whether the item can be picked up and manipulated. It is `false` by 
 default, and is optional.
+
 ---
 The `save` option is for setting whether the item should be saved.
 It is `false` by default, and is optional.
+
 ---
 The following are the varying click types that you can have MythicInventories listen for to run a skill:
   - `left_click`
@@ -113,10 +122,13 @@ The following are the varying click types that you can have MythicInventories li
 
 Each item can have multiple click types, each click type can have multiple skills, and each skill is limited only by what you can do with MythicMobs skills.
 See the above example inventory for a basic layout of how to set up a skill.
+
 ---
+
 The `trinket` option is for setting a slot as a trinket slot.
 This makes MythicInventories treat items that are already filled in this slot, or are put into this slot by a player,
 as a trinket item. Trinkets are currently only supported for items from MythicMobs, as defined through a configuration section within the item itself.
+
 ```yaml
 # Example MythicMobs item for Trinkets
 KingsCrown:
@@ -148,15 +160,15 @@ KingsCrown:
 ---
 The `item_flags` option is for setting flags on the item. It is empty by default, and is optional.
 Valid values for item flags are as follows:
-  - `HIDE_ENCHANTS`,
-  - `HIDE_ATTRIBUTES`,
-  - `HIDE_UNBREAKABLE`,
-  - `HIDE_DESTROYS`,
-  - `HIDE_PLACED_ON`,
-  - `HIDE_ADDITIONAL_TOOLTIP`,
-  - `HIDE_DYE`,
-  - `HIDE_ARMOR_TRIM`,
-  - `HIDE_STORED_ENCHANTS`;
+  - `HIDE_ENCHANTS`
+  - `HIDE_ATTRIBUTES`
+  - `HIDE_UNBREAKABLE`
+  - `HIDE_DESTROYS`
+  - `HIDE_PLACED_ON`
+  - `HIDE_ADDITIONAL_TOOLTIP`
+  - `HIDE_DYE`
+  - `HIDE_ARMOR_TRIM`
+  - `HIDE_STORED_ENCHANTS`
 ---
 ## Commands
 | Command                             | Description                                                                 | Permission                              | Aliases                            |
