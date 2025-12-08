@@ -79,30 +79,29 @@ public class MythicInventorySerializer {
     /**
      * Deserialize an inventory from a JSON file.
      * @param file The file to deserialize the inventory from.
-     * @param inventoryInternalName The name of the inventory.
      */
-    public MythicInventory deserializeInventoryFromJson(File file, String inventoryInternalName) {
+    public HashMap<Integer, ItemStack> deserializeInventoryFromJson(File file) {
+        HashMap<Integer, ItemStack> loadedItems = new HashMap<>();
         try (FileReader reader = new FileReader(file)) {
-            MythicInventory inventory = new MythicInventory(plugin, inventoryInternalName);
-
             Type hashMapType = new TypeToken<HashMap<Integer, String>>() {}.getType();
 
             HashMap<Integer, String> map = gson.fromJson(reader, hashMapType);
+            if (map == null) return loadedItems;
+
             for (Integer slot : map.keySet()) {
                 byte[] decoded = Base64.decodeBase64(map.get(slot));
                 ItemStack deserialized = ItemStack.deserializeBytes(decoded);
-                inventory.setItem(slot, deserialized);
+                loadedItems.put(slot, deserialized);
             }
-            return inventory;
+            return loadedItems;
         }
         catch (IOException e) {
             plugin.getLogger().severe("Failed to load inventory from file: " + file.getName());
-            return null;
+            return loadedItems;
         }
         catch (Exception e) {
-            plugin.getLogger().severe("If you have just recently updated, please run the \"/migrateolddata\" command!");
             plugin.getLogger().severe("An error occurred while deserializing inventory: " + e.getMessage());
-            return null;
+            return loadedItems;
         }
     }
 
@@ -154,7 +153,42 @@ public class MythicInventorySerializer {
             plugin.getLogger().warning("Inventory file not found: " + file.getName());
             return null;
         }
-        return deserializeInventoryFromJson(file, inventory.getInternalName());
+
+        HashMap<Integer, ItemStack> loadedItems = deserializeInventoryFromJson(file);
+        MythicInventory loadedInventory = new MythicInventory(plugin, inventory.getInternalName());
+
+        for (Map.Entry<Integer, ItemStack> entry : loadedItems.entrySet()) {
+            loadedInventory.setItem(entry.getKey(), entry.getValue());
+        }
+        return loadedInventory;
+    }
+
+    /**
+     * Load all saved items from all player inventory files, keyed by the inventory's internal name.
+     * This is used for re-applying attributes and skills on player join, correctly linking items to their source inventory template.
+     * @param player The player to load the inventories for.
+     * @return A map where the key is the inventory name and the value is a map of slot indices to ItemStacks.
+     */
+    public HashMap<String, HashMap<Integer, ItemStack>> loadInventory(Player player) {
+        HashMap<String, HashMap<Integer, ItemStack>> allSavedInventoryData = new HashMap<>();
+        File playerDir = new File(plugin.getDataFolder(), "playerdata/" + player.getUniqueId());
+
+        if (!playerDir.exists()) {
+            return allSavedInventoryData;
+        }
+
+        File[] files = playerDir.listFiles((dir, name) -> name.endsWith(".json"));
+        if (files == null) {
+            return allSavedInventoryData;
+        }
+
+        for (File file : files) {
+            String inventoryInternalName = file.getName().replace(".json", "");
+            HashMap<Integer, ItemStack> loadedItems = deserializeInventoryFromJson(file);
+
+            allSavedInventoryData.put(inventoryInternalName, loadedItems);
+        }
+        return allSavedInventoryData;
     }
 
     /**
