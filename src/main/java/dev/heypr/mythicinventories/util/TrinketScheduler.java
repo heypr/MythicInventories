@@ -43,7 +43,8 @@ public class TrinketScheduler {
             plugin.getLogger().severe("Could not start trinket task for " + config.skill() + ": skill is invalid or not found.");
             return;
         }
-        TrinketSkillTask runnable = new TrinketSkillTask(plugin, player, slot, config, skill, trinket, inventory);
+
+        TrinketSkillTask runnable = new TrinketSkillTask(plugin, player, slot, config, skill, inventory);
 
         BukkitTask bukkitTask = runnable.runTaskTimer(plugin, 1L, interval);
 

@@ -115,6 +115,7 @@ public class InventoryCreator {
 
             utils.setAmount(item);
             utils.setDisplayName(meta);
+            utils.setUnbreakable(meta);
             utils.setLore(meta);
             utils.addItemFlags(meta, item);
 

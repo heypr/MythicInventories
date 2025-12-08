@@ -13,12 +13,13 @@ import java.util.*;
 
 public class MythicInventory implements InventoryHolder {
 
-    private final HashMap<Integer, TrinketConfig> trinketSlots = new HashMap<>();
+    private final HashMap<Integer, HashMap<MIClickType, List<String>>> clickSkills = new HashMap<>();
+    private final HashMap<Integer, ItemStack> interactableItems = new HashMap<>();
+    private final Set<Integer> trinketSlots = new HashSet<>();
+    private final Set<Integer> savedItems = new HashSet<>();
     private final Inventory inventory;
     private String internalName;
-    private Set<Integer> savedItems = new HashSet<>();
-    private HashMap<Integer, ItemStack> interactableItems = new HashMap<>();
-    private HashMap<Integer, HashMap<MIClickType, List<String>>> clickSkills = new HashMap<>();
+    private boolean isGui;
 
     /**
      * Configuration data for a specialized trinket slot.
@@ -59,28 +60,16 @@ public class MythicInventory implements InventoryHolder {
      * @return True if the slot is a trinket slot.
      */
     public boolean isTrinketSlot(int slot) {
-        return trinketSlots.containsKey(slot);
-    }
-
-    /**
-     * Get the configuration for a trinket slot.
-     *
-     * @param slot The slot index.
-     * @return The {@link TrinketConfig} or null if the slot is not a trinket slot.
-     */
-    @Nullable
-    public TrinketConfig getTrinketSlotConfig(int slot) {
-        return trinketSlots.get(slot);
+        return trinketSlots.contains(slot);
     }
 
     /**
      * Registers a slot as a trinket slot with its specific configuration.
      *
      * @param slot The slot index.
-     * @param config The {@link TrinketConfig} object.
      */
-    public void addTrinketSlot(int slot, TrinketConfig config) {
-        trinketSlots.put(slot, config);
+    public void addTrinketSlot(int slot) {
+        trinketSlots.add(slot);
     }
 
     @NotNull
@@ -105,6 +94,14 @@ public class MythicInventory implements InventoryHolder {
      */
     public void setInternalName(String internalName) {
         this.internalName = internalName;
+    }
+
+    public boolean isGui() {
+        return isGui;
+    }
+
+    public void setIsGui(boolean gui) {
+        this.isGui = gui;
     }
 
     /**

@@ -17,3 +17,10 @@ my_first_inventory:
         - effect:particles{p=happyVillager;amount=1000;hSpread=15;ySpread=1;speed=0;yOffset=0.5} @Self
       save: false
       interactable: false
+    - type: mythic:KingsCrown
+      slot: 25
+    - type: air
+      slot: 20
+      trinket: true
+      save: true
+      interactable: true

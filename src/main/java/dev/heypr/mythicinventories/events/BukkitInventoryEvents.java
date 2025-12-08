@@ -3,16 +3,16 @@ package dev.heypr.mythicinventories.events;
 import dev.heypr.mythicinventories.MythicInventories;
 import dev.heypr.mythicinventories.inventories.MythicInventory;
 import dev.heypr.mythicinventories.inventories.MythicInventory.TrinketConfig;
+import dev.heypr.mythicinventories.util.AttributeManager;
 import dev.heypr.mythicinventories.util.MIClickType;
-import io.lumine.mythic.bukkit.BukkitAdapter;
-import io.lumine.mythic.core.utils.jnbt.CompoundTag;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.*;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.event.inventory.InventoryInteractEvent;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataType;
 
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -25,9 +25,11 @@ import static org.bukkit.event.inventory.InventoryAction.*;
 public class BukkitInventoryEvents implements Listener {
 
     private final MythicInventories plugin;
+    private final AttributeManager attributeManager;
 
     public BukkitInventoryEvents(MythicInventories plugin) {
         this.plugin = plugin;
+        this.attributeManager = plugin.getAttributeManager();
     }
 
     @EventHandler
@@ -37,14 +39,56 @@ public class BukkitInventoryEvents implements Listener {
 
         final int slot = event.getRawSlot();
         final Player player = (Player) event.getWhoClicked();
+        ItemStack cursorItem = event.getCursor();
+        ItemStack clickedItem = event.getCurrentItem();
+
+        if (event.getAction() == MOVE_TO_OTHER_INVENTORY) {
+
+            if (event.getClickedInventory().equals(player.getInventory())) {
+                ItemStack itemToMove = event.getCurrentItem();
+                if (itemToMove == null || itemToMove.getType().isAir()) return;
+
+                TrinketConfig itemConfig = plugin.getTrinketConfigFromItem(itemToMove);
+
+                if (itemConfig != null) {
+                    int targetSlot = -1;
+
+                    for (int i = 0; i < inventory.getInventory().getSize(); i++) {
+                        if (inventory.isTrinketSlot(i)) {
+                            ItemStack existingItem = inventory.getInventory().getItem(i);
+                            if (existingItem == null || existingItem.getType().isAir() || (inventory.getInteractableItems().containsKey(i) && inventory.getInteractableItems().get(i).isSimilar(existingItem))) {
+                                targetSlot = i;
+                                break;
+                            }
+                        }
+                    }
+
+                    event.setCancelled(true);
+                    if (targetSlot != -1) {
+                        inventory.getInventory().setItem(targetSlot, itemToMove.clone());
+                        event.setCurrentItem(new ItemStack(Material.AIR));
+
+                        handleTrinketPlacement(event, inventory, itemConfig, player, targetSlot);
+                    }
+                }
+                else {
+                    event.setCancelled(true);
+                    player.sendMessage("This item cannot be used as a trinket!");
+                }
+                return;
+            }
+            else if (event.getClickedInventory().equals(inventory.getInventory())) {
+                if (!inventory.isTrinketSlot(slot) && !isInteractable(inventory, slot)) {
+                    event.setCancelled(true);
+                    return;
+                }
+            }
+        }
 
         if (inventory.isTrinketSlot(slot)) {
-            TrinketConfig slotConfig = inventory.getTrinketSlotConfig(slot);
-            ItemStack cursorItem = event.getCursor();
-            ItemStack clickedItem = event.getCurrentItem();
 
             if (cursorItem.getType() != Material.AIR && event.getClickedInventory().equals(inventory.getInventory())) {
-                TrinketConfig itemConfig = getTrinketConfigFromItem(cursorItem);
+                TrinketConfig itemConfig = plugin.getTrinketConfigFromItem(cursorItem);
 
                 if (itemConfig != null) {
                     handleTrinketPlacement(event, inventory, itemConfig, player, slot);
@@ -63,9 +107,9 @@ public class BukkitInventoryEvents implements Listener {
                     return;
                 }
 
-                TrinketConfig itemConfig = getTrinketConfigFromItem(clickedItem);
+                TrinketConfig itemConfig = plugin.getTrinketConfigFromItem(clickedItem);
                 if (itemConfig != null) {
-                    handleTrinketRemoval(event, inventory, slotConfig, player, slot);
+                    handleTrinketRemoval(event, inventory, itemConfig, player, slot);
                     return;
                 }
             }
@@ -97,48 +141,52 @@ public class BukkitInventoryEvents implements Listener {
         plugin.getInventorySerializer().saveInventory(inventory, (Player) event.getPlayer());
     }
 
-    private TrinketConfig getTrinketConfigFromItem(ItemStack item) {
-        CompoundTag data = BukkitAdapter.adapt(item).getCustomData();
+    private void handleTrinketPlacement(InventoryClickEvent event, MythicInventory inventory, TrinketConfig config, Player player, int slot) {
+        ItemStack trinketToPlace = event.getAction() == MOVE_TO_OTHER_INVENTORY ? inventory.getInventory().getItem(slot) : event.getCursor().clone();
 
-        if (data.getString("is_trinket") == null) {
-            return null;
+        if (event.getAction() != MOVE_TO_OTHER_INVENTORY) {
+            event.setCancelled(true);
         }
-
-        if (!data.getString("is_trinket").equals("true")) {
-            return null;
-        }
-
-        String skill = data.getString("trinket_skill");
-        String interval = data.getString("trinket_interval");
-        String uses = data.getString("trinket_uses");
-
-        if (skill == null || skill.isEmpty() || Integer.parseInt(interval) <= 0) {
-            return null;
-        }
-        return new TrinketConfig(skill, interval, uses, false);
-    }
-
-    private void handleTrinketPlacement(InventoryClickEvent event, MythicInventory inventory, TrinketConfig itemConfig, Player player, int slot) {
-        event.setCancelled(true);
-
-        ItemStack trinketToPlace = event.getCursor().clone();
 
         if (event.getClickedInventory() == null) return;
 
-        event.getClickedInventory().setItem(slot, trinketToPlace);
-        event.setCursor(new ItemStack(Material.AIR));
+        if (event.getAction() != MOVE_TO_OTHER_INVENTORY) {
+            event.getClickedInventory().setItem(slot, trinketToPlace);
+            event.setCursor(new ItemStack(Material.AIR));
+        }
 
-        UUID key = UUID.nameUUIDFromBytes(itemConfig.skill().getBytes(StandardCharsets.UTF_8));
-        plugin.addToTrinketSkillCache(key, itemConfig.skill());
-        plugin.getTrinketScheduler().startTrinketSkillTask(player, slot, itemConfig, trinketToPlace, inventory);
+        if (trinketToPlace == null || trinketToPlace.getType().isAir()) return;
+
+        UUID configKey = UUID.nameUUIDFromBytes(config.skill().getBytes(StandardCharsets.UTF_8));
+        ItemMeta meta = trinketToPlace.getItemMeta();
+        if (meta != null) {
+            meta.getPersistentDataContainer().set(plugin.getTrinketCacheKey(), PersistentDataType.STRING, configKey.toString());
+            trinketToPlace.setItemMeta(meta);
+        }
+
+        inventory.getInventory().setItem(slot, trinketToPlace);
+
+        attributeManager.applyAttributes(player, slot, trinketToPlace);
+
+        if (!config.skill().equals("NO_SKILL")) {
+            plugin.addToTrinketSkillCache(configKey, config.skill());
+            plugin.getTrinketScheduler().startTrinketSkillTask(player, slot, config, trinketToPlace, inventory);
+        }
     }
 
     private void handleTrinketRemoval(InventoryClickEvent event, MythicInventory inventory, TrinketConfig config, Player player, int slot) {
         event.setCancelled(true);
         if (event.getClickedInventory() == null) return;
-        ItemStack trinketToRemove = event.getCurrentItem().clone();
+        ItemStack trinketToRemove = event.getCurrentItem();
 
         plugin.getTrinketScheduler().stopTrinketSkillTask(player, slot);
+        attributeManager.removeAttributes(player, slot);
+
+        ItemMeta meta = trinketToRemove.getItemMeta();
+        if (meta != null) {
+            meta.getPersistentDataContainer().remove(plugin.getTrinketCacheKey());
+            trinketToRemove.setItemMeta(meta);
+        }
 
         ItemStack placeholder = inventory.getInteractableItems().get(slot);
 
@@ -149,10 +197,15 @@ public class BukkitInventoryEvents implements Listener {
             event.getClickedInventory().setItem(slot, new ItemStack(Material.AIR));
         }
 
-        HashMap<Integer, ItemStack> remaining = player.getInventory().addItem(trinketToRemove);
-        if (!remaining.isEmpty()) {
-            player.getWorld().dropItem(player.getLocation(), trinketToRemove);
-            player.sendMessage("Your inventory was full, the trinket was dropped on the ground!");
+        if (event.isShiftClick() || event.getAction() == MOVE_TO_OTHER_INVENTORY) {
+            HashMap<Integer, ItemStack> remaining = player.getInventory().addItem(trinketToRemove);
+            if (!remaining.isEmpty()) {
+                player.getWorld().dropItem(player.getLocation(), trinketToRemove);
+                player.sendMessage("Your inventory was full, the trinket was dropped on the ground!");
+            }
+        }
+        else {
+            event.setCursor(trinketToRemove);
         }
 
         player.updateInventory();

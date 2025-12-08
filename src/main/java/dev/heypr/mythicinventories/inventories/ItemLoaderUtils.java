@@ -1,15 +1,16 @@
 package dev.heypr.mythicinventories.inventories;
 
 import dev.heypr.mythicinventories.MythicInventories;
-import dev.heypr.mythicinventories.inventories.MythicInventory.TrinketConfig;
 import dev.heypr.mythicinventories.util.ComponentSerializer;
 import dev.heypr.mythicinventories.util.MIClickType;
+import io.lumine.mythic.api.config.MythicConfig;
 import io.lumine.mythic.bukkit.BukkitAdapter;
 import io.lumine.mythic.core.items.MythicItem;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataType;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -17,6 +18,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+@SuppressWarnings("UnstableApiUsage")
 public class ItemLoaderUtils {
 
     private final MythicInventories plugin;
@@ -44,6 +46,10 @@ public class ItemLoaderUtils {
             plugin.getLogger().severe("Invalid value for key '" + key + "' in inventory '" + inventoryId + "'. Expected " + expectedType.getSimpleName() + ", got " + value.getClass().getSimpleName() + ".");
         }
         return defaultValue;
+    }
+
+    private Integer getInteger(String key, int defaultValue) {
+        return getObject(key, Integer.class, defaultValue);
     }
 
     private Boolean getBoolean(String key) {
@@ -76,7 +82,7 @@ public class ItemLoaderUtils {
     }
 
     public int getSlot() {
-        Integer slot = getObject("slot", Integer.class, -1);
+        Integer slot = getInteger("slot", -1);
         return slot != null && slot >= 0 ? slot : -1;
     }
 
@@ -94,10 +100,46 @@ public class ItemLoaderUtils {
                 return null;
             }
             String mythicId = type.replace("mythic:", "");
-            Optional<MythicItem> item;
-            item = plugin.getMythicInst().getItemManager().getItem(mythicId);
+            Optional<MythicItem> item = plugin.getMythicInst().getItemManager().getItem(mythicId);
+
             if (item.isPresent()) {
-                return BukkitAdapter.adapt(item.get().generateItemStack(1));
+                MythicConfig mmConfig = item.get().getConfig().getNestedConfig("Trinket");
+
+                if (mmConfig == null) {
+                    return BukkitAdapter.adapt(item.get().generateItemStack(1));
+                }
+
+                String skill = mmConfig.getString("skill", "NO_SKILL");
+                String interval = mmConfig.getString("interval", "100");
+                boolean hasAttributes = mmConfig.isConfigurationSection("attributes");
+
+                if (skill.equalsIgnoreCase("NO_SKILL") && !hasAttributes) {
+                    plugin.getLogger().warning("Mythic Item '" + mythicId + "' has a Trinket section but no skill or attributes defined.");
+                    return BukkitAdapter.adapt(item.get().generateItemStack(1));
+                }
+
+                if (!skill.equalsIgnoreCase("NO_SKILL")) {
+                    try {
+                        if (Integer.parseInt(interval) <= 0) {
+                            plugin.getLogger().severe("Invalid trinket interval (" + interval + ") for item '" + mythicId + "'.");
+                            return null;
+                        }
+                    }
+                    catch (NumberFormatException e) {
+                        plugin.getLogger().severe("Non-numeric trinket interval (" + interval + ") for item '" + mythicId + "'.");
+                        return null;
+                    }
+                }
+
+                ItemStack finalItem = BukkitAdapter.adapt(item.get().generateItemStack(1));
+
+                ItemMeta meta = finalItem.getItemMeta();
+                if (meta != null) {
+                    meta.getPersistentDataContainer().set(plugin.getMythicIdKey(), PersistentDataType.STRING, mythicId);
+                    finalItem.setItemMeta(meta);
+                }
+
+                return finalItem;
             }
             else {
                 plugin.getLogger().severe("Invalid MythicMobs item \"" + mythicId + "\" in inventory \"" + inventoryId + "\"!");
@@ -115,7 +157,7 @@ public class ItemLoaderUtils {
     }
 
     public void setAmount(ItemStack item) {
-        int amount = getObject("amount", Integer.class, 1);
+        int amount = getInteger("amount", 1);
         if (amount <= 0) amount = 1;
         item.setAmount(amount);
     }
@@ -125,6 +167,250 @@ public class ItemLoaderUtils {
             String name = itemData.get("name").toString();
             meta.displayName(ComponentSerializer.applyDefaultFormatting(name));
         }
+    }
+
+    public void setUnbreakable(ItemMeta meta) {
+        if (checkValue("unbreakable")) {
+            boolean unbreakable = getBoolean("unbreakable");
+            meta.setUnbreakable(unbreakable);
+        }
+    }
+
+    // TODO: Data component options
+    public void setMaxStackSize(ItemStack item) {
+        // DataComponentTypes.MAX_STACK_SIZE
+    }
+
+    public void setMaxDamage(ItemStack item) {
+        // DataComponentTypes.MAX_DAMAGE
+    }
+
+    public void setDamage(ItemStack item) {
+        // DataComponentTypes.DAMAGE
+    }
+
+    public void setUnbreakable(ItemStack item) {
+        // DataComponentTypes.UNBREAKABLE
+    }
+
+    public void setCustomName(ItemStack item) {
+        // DataComponentTypes.CUSTOM_NAME
+    }
+
+    public void setItemName(ItemStack item) {
+        // DataComponentTypes.ITEM_NAME
+    }
+
+    public void setItemModel(ItemStack item) {
+        // DataComponentTypes.ITEM_MODEL
+    }
+
+    public void setRarity(ItemStack item) {
+        // DataComponentTypes.RARITY
+    }
+
+    public void setRepairCost(ItemStack item) {
+        // DataComponentTypes.REPAIR_COST
+    }
+
+    public void setEnchantmentGlintOverride(ItemStack item) {
+        // DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE
+    }
+
+    public void setTooltipStyle(ItemStack item) {
+        // DataComponentTypes.TOOLTIP_STYLE
+    }
+
+    public void setStoredEnchantments(ItemStack item) {
+        // DataComponentTypes.STORED_ENCHANTMENTS
+    }
+
+    public void setDyedColor(ItemStack item) {
+        // DataComponentTypes.DYED_COLOR
+    }
+
+    public void setMapColor(ItemStack item) {
+        // DataComponentTypes.MAP_COLOR
+    }
+
+    public void setMapId(ItemStack item) {
+        // DataComponentTypes.MAP_ID
+    }
+
+    public void setMapPostProcessing(ItemStack item) {
+        // DataComponentTypes.MAP_POST_PROCESSING
+    }
+
+    public void setOminousBottleAmplifier(ItemStack item) {
+        // DataComponentTypes.OMINOUS_BOTTLE_AMPLIFIER
+    }
+
+    public void setNoteBlockSound(ItemStack item) {
+        // DataComponentTypes.NOTE_BLOCK_SOUND
+    }
+
+    public void setBaseColor(ItemStack item) {
+        // DataComponentTypes.BASE_COLOR
+    }
+
+    public void setInstrument(ItemStack item) {
+        // DataComponentTypes.INSTRUMENT
+    }
+
+    public void setRecipes(ItemStack item) {
+        // DataComponentTypes.RECIPES
+    }
+
+    public void setHideAdditionalTooltip(ItemStack item) {
+        // DataComponentTypes.HIDE_ADDITIONAL_TOOLTIP
+    }
+
+    public void setHideTooltip(ItemStack item) {
+        // DataComponentTypes.HIDE_TOOLTIP
+    }
+
+    public void setIntangibleProjectile(ItemStack item) {
+        // DataComponentTypes.INTANGIBLE_PROJECTILE
+    }
+
+    public void setGlider(ItemStack item) {
+        // DataComponentTypes.GLIDER
+    }
+
+    public void setLore(ItemStack item) {
+        // DataComponentTypes.LORE
+    }
+
+    public void setEnchantments(ItemStack item) {
+        // DataComponentTypes.ENCHANTMENTS
+    }
+
+    public void setCanPlaceOn(ItemStack item) {
+        // DataComponentTypes.CAN_PLACE_ON
+    }
+
+    public void setCanBreak(ItemStack item) {
+        // DataComponentTypes.CAN_BREAK
+    }
+
+    public void setAttributeModifiers(ItemStack item) {
+        // DataComponentTypes.ATTRIBUTE_MODIFIERS
+    }
+
+    public void setCustomModelData(ItemStack item) {
+        // DataComponentTypes.CUSTOM_MODEL_DATA
+    }
+
+    public void setFood(ItemStack item) {
+        // DataComponentTypes.FOOD
+    }
+
+    public void setConsumable(ItemStack item) {
+        // DataComponentTypes.CONSUMABLE
+    }
+
+    public void setUseRemainder(ItemStack item) {
+        // DataComponentTypes.USE_REMAINDER
+    }
+
+    public void setUseCooldown(ItemStack item) {
+        // DataComponentTypes.USE_COOLDOWN
+    }
+
+    public void setDamageResistant(ItemStack item) {
+        // DataComponentTypes.DAMAGE_RESISTANT
+    }
+
+    public void setTool(ItemStack item) {
+        // DataComponentTypes.TOOL
+    }
+
+    public void setEnchantable(ItemStack item) {
+        // DataComponentTypes.ENCHANTABLE
+    }
+
+    public void setEquippable(ItemStack item) {
+        // DataComponentTypes.EQUIPPABLE
+    }
+
+    public void setRepairable(ItemStack item) {
+        // DataComponentTypes.REPAIRABLE
+    }
+
+    public void setDeathProtection(ItemStack item) {
+        // DataComponentTypes.DEATH_PROTECTION
+    }
+
+    public void setMapDecorations(ItemStack item) {
+        // DataComponentTypes.MAP_DECORATIONS
+    }
+
+    public void setChargedProjectiles(ItemStack item) {
+        // DataComponentTypes.CHARGED_PROJECTILES
+    }
+
+    public void setBundleContents(ItemStack item) {
+        // DataComponentTypes.BUNDLE_CONTENTS
+    }
+
+    public void setPotionContents(ItemStack item) {
+        // DataComponentTypes.POTION_CONTENTS
+    }
+
+    public void setSuspiciousStewEffects(ItemStack item) {
+        // DataComponentTypes.SUSPICIOUS_STEW_EFFECTS
+    }
+
+    public void setWritableBookContent(ItemStack item) {
+        // DataComponentTypes.WRITABLE_BOOK_CONTENT
+    }
+
+    public void setWrittenBookContent(ItemStack item) {
+        // DataComponentTypes.WRITTEN_BOOK_CONTENT
+    }
+
+    public void setTrim(ItemStack item) {
+        // DataComponentTypes.TRIM
+    }
+
+    public void setJukeboxPlayable(ItemStack item) {
+        // DataComponentTypes.JUKEBOX_PLAYABLE
+    }
+
+    public void setLodestoneTracker(ItemStack item) {
+        // DataComponentTypes.LODESTONE_TRACKER
+    }
+
+    public void setFireworkExplosion(ItemStack item) {
+        // DataComponentTypes.FIREWORK_EXPLOSION
+    }
+
+    public void setFireworks(ItemStack item) {
+        // DataComponentTypes.FIREWORKS
+    }
+
+    public void setProfile(ItemStack item) {
+        // DataComponentTypes.PROFILE
+    }
+
+    public void setBannerPatterns(ItemStack item) {
+        // DataComponentTypes.BANNER_PATTERNS
+    }
+
+    public void setPotDecorations(ItemStack item) {
+        // DataComponentTypes.POT_DECORATIONS
+    }
+
+    public void setContainer(ItemStack item) {
+        // DataComponentTypes.CONTAINER
+    }
+
+    public void setBlockData(ItemStack item) {
+        // DataComponentTypes.BLOCK_DATA
+    }
+
+    public void setContainerLoot(ItemStack item) {
+        // DataComponentTypes.CONTAINER_LOOT
     }
 
     public void setLore(ItemMeta meta) {
@@ -213,13 +499,10 @@ public class ItemLoaderUtils {
     }
 
     public boolean handleTrinketSlot(MythicInventory inventory, int slot) {
-        if (!checkValue("trinket_slot") || !getBoolean("trinket_slot")) {
+        if (!checkValue("trinket") || !getBoolean("trinket")) {
             return true;
         }
-        Boolean disappears = getBoolean("trinket_initial_item_disappears");
-
-        TrinketConfig config = new TrinketConfig("DUMMY_SKILL", "100", "-1", disappears);
-        inventory.addTrinketSlot(slot, config);
+        inventory.addTrinketSlot(slot);
         return true;
     }
 }
