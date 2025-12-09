@@ -1,10 +1,10 @@
-package dev.heypr.mythicinventories.events;
+package dev.heypr.mythicinventories.listeners;
 
 import dev.heypr.mythicinventories.MythicInventories;
-import dev.heypr.mythicinventories.inventories.MythicInventory;
-import dev.heypr.mythicinventories.inventories.MythicInventory.TrinketConfig;
-import dev.heypr.mythicinventories.util.AttributeManager;
-import dev.heypr.mythicinventories.util.MIClickType;
+import dev.heypr.mythicinventories.inventory.MIClickType;
+import dev.heypr.mythicinventories.inventory.MythicInventory;
+import dev.heypr.mythicinventories.inventory.MythicInventory.TrinketConfig;
+import dev.heypr.mythicinventories.trinket.AttributeManager;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -48,7 +48,7 @@ public class BukkitInventoryEvents implements Listener {
                 ItemStack itemToMove = event.getCurrentItem();
                 if (itemToMove == null || itemToMove.getType().isAir()) return;
 
-                TrinketConfig itemConfig = plugin.getTrinketConfigFromItem(itemToMove);
+                TrinketConfig itemConfig = plugin.getTrinketManager().getTrinketConfigFromItem(itemToMove);
 
                 if (itemConfig != null) {
                     int targetSlot = -1;
@@ -88,7 +88,7 @@ public class BukkitInventoryEvents implements Listener {
         if (inventory.isTrinketSlot(slot)) {
 
             if (cursorItem.getType() != Material.AIR && event.getClickedInventory().equals(inventory.getInventory())) {
-                TrinketConfig itemConfig = plugin.getTrinketConfigFromItem(cursorItem);
+                TrinketConfig itemConfig = plugin.getTrinketManager().getTrinketConfigFromItem(cursorItem);
 
                 if (itemConfig != null) {
                     handleTrinketPlacement(event, inventory, itemConfig, player, slot);
@@ -106,7 +106,7 @@ public class BukkitInventoryEvents implements Listener {
                     return;
                 }
 
-                TrinketConfig itemConfig = plugin.getTrinketConfigFromItem(clickedItem);
+                TrinketConfig itemConfig = plugin.getTrinketManager().getTrinketConfigFromItem(clickedItem);
                 if (itemConfig != null) {
                     handleTrinketRemoval(event, inventory, itemConfig, player, slot);
                     return;
@@ -168,7 +168,7 @@ public class BukkitInventoryEvents implements Listener {
         attributeManager.applyAttributes(player, slot, trinketToPlace);
 
         if (!config.skill().equals("NO_SKILL")) {
-            plugin.addToTrinketSkillCache(configKey, config.skill());
+            plugin.getCacheManager().cacheTrinketSkill(configKey, config.skill());
             plugin.getTrinketScheduler().startTrinketSkillTask(player, slot, config, trinketToPlace, inventory);
         }
     }
@@ -211,12 +211,12 @@ public class BukkitInventoryEvents implements Listener {
     }
 
     private void castSkill(InventoryInteractEvent event, String inputSkill) {
-        if (!plugin.isMythicMobsEnabled()) {
+        if (!plugin.getMythicManager().isMythicMobsEnabled()) {
             plugin.getLogger().warning("MythicMobs was not found! Cannot cast skill: " + inputSkill);
             return;
         }
         Player player = (Player) event.getWhoClicked();
-        plugin.executeMythicSkill(player, inputSkill);
+        plugin.getMythicManager().executeMythicSkill(player, inputSkill);
     }
 
     private void checkClickType(InventoryClickEvent event, MythicInventory inventory, int slot) {
@@ -227,57 +227,56 @@ public class BukkitInventoryEvents implements Listener {
             List<String> skills = inventory.getClickSkills(slot, clickType);
             if (skills == null) continue;
             for (String skill : skills) {
-                performTypeChecks(clickType.name(), event, skill, event.getAction());
+                performTypeChecks(clickType, event, skill, event.getAction());
             }
         }
     }
 
-    private void performTypeChecks(String clickType, InventoryClickEvent event, String skill, InventoryAction action) {
+    private void performTypeChecks(MIClickType clickType, InventoryClickEvent event, String skill, InventoryAction action) {
         boolean isDrop = (action == DROP_ALL_SLOT || action == DROP_ONE_SLOT || action == DROP_ALL_CURSOR || action == DROP_ONE_CURSOR);
         boolean isMiddleClick = (action == CLONE_STACK);
         boolean isHotbarSwap = (action == HOTBAR_SWAP);
         switch (clickType) {
-            case "LEFT_CLICK":
+            case LEFT_CLICK:
                 if (event.isLeftClick() && !event.isShiftClick()) {
                     castSkill(event, skill);
                 }
                 break;
-            case "RIGHT_CLICK":
+            case RIGHT_CLICK:
                 if (event.isRightClick() && !event.isShiftClick()) {
                     castSkill(event, skill);
                 }
                 break;
-            case "SHIFT_LEFT_CLICK":
+            case SHIFT_LEFT_CLICK:
                 if (event.isShiftClick() && event.isLeftClick()) {
                     castSkill(event, skill);
                 }
                 break;
-            case "SHIFT_RIGHT_CLICK":
+            case SHIFT_RIGHT_CLICK:
                 if (event.isShiftClick() && event.isRightClick()) {
                     castSkill(event, skill);
                 }
                 break;
-            case "MIDDLE_CLICK":
+            case MIDDLE_CLICK:
                 if (isMiddleClick) {
                     castSkill(event, skill);
                 }
                 break;
-            case "SHIFT_MIDDLE_CLICK":
+            case SHIFT_MIDDLE_CLICK:
                 if (event.isShiftClick() && isMiddleClick) {
                     castSkill(event, skill);
                 }
                 break;
-            case "DROP":
+            case DROP:
                 if (isDrop) {
+                    if (event.isShiftClick()) {
+                        castSkill(event, skill);
+                        break;
+                    }
                     castSkill(event, skill);
                 }
                 break;
-            case "SHIFT_DROP":
-                if (event.isShiftClick() && isDrop) {
-                    castSkill(event, skill);
-                }
-                break;
-            case "HOTBAR_SWAP":
+            case HOTBAR_SWAP:
                 if (isHotbarSwap) {
                     castSkill(event, skill);
                 }
@@ -294,13 +293,13 @@ public class BukkitInventoryEvents implements Listener {
             List<String> skills = inventory.getClickSkills(slot, clickType);
             if (skills == null) continue;
             for (String skill : skills) {
-                switch (clickType.name()) {
-                    case "LEFT_CLICK":
+                switch (clickType) {
+                    case LEFT_CLICK:
                         if (event.getType().equals(DragType.SINGLE)) {
                             castSkill(event, skill);
                         }
                         break;
-                    case "RIGHT_CLICK":
+                    case RIGHT_CLICK:
                         if (event.getType().equals(DragType.EVEN)) {
                             castSkill(event, skill);
                         }

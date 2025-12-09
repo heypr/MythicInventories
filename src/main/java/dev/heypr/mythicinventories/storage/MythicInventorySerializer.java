@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import dev.heypr.mythicinventories.MythicInventories;
-import dev.heypr.mythicinventories.inventories.MythicInventory;
+import dev.heypr.mythicinventories.inventory.MythicInventory;
 import org.apache.commons.codec.binary.Base64;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;

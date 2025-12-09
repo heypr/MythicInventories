@@ -19,6 +19,6 @@ public class OpenInventoryTabCompleter implements TabCompleter {
 
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        return plugin.getInventoryNames();
+        return plugin.getInventoryManager().getInventoryNames();
     }
 }
