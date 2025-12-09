@@ -1,7 +1,6 @@
 package dev.heypr.mythicinventories.listeners;
 
 import dev.heypr.mythicinventories.MythicInventories;
-import dev.heypr.mythicinventories.inventory.MIClickType;
 import dev.heypr.mythicinventories.inventory.MythicInventory;
 import dev.heypr.mythicinventories.inventory.MythicInventory.TrinketConfig;
 import dev.heypr.mythicinventories.trinket.AttributeManager;
@@ -220,10 +219,10 @@ public class BukkitInventoryEvents implements Listener {
     }
 
     private void checkClickType(InventoryClickEvent event, MythicInventory inventory, int slot) {
-        HashMap<MIClickType, List<String>> clickTypes = inventory.getClickTypes(slot);
+        HashMap<ClickType, List<String>> clickTypes = inventory.getClickTypes(slot);
         if (clickTypes == null) return;
-        Set<MIClickType> clickTypesSet = clickTypes.keySet();
-        for (MIClickType clickType : clickTypesSet) {
+        Set<ClickType> clickTypesSet = clickTypes.keySet();
+        for (ClickType clickType : clickTypesSet) {
             List<String> skills = inventory.getClickSkills(slot, clickType);
             if (skills == null) continue;
             for (String skill : skills) {
@@ -232,38 +231,37 @@ public class BukkitInventoryEvents implements Listener {
         }
     }
 
-    private void performTypeChecks(MIClickType clickType, InventoryClickEvent event, String skill, InventoryAction action) {
+    private void performTypeChecks(ClickType clickType, InventoryClickEvent event, String skill, InventoryAction action) {
         boolean isDrop = (action == DROP_ALL_SLOT || action == DROP_ONE_SLOT || action == DROP_ALL_CURSOR || action == DROP_ONE_CURSOR);
         boolean isMiddleClick = (action == CLONE_STACK);
         boolean isHotbarSwap = (action == HOTBAR_SWAP);
         switch (clickType) {
-            case LEFT_CLICK:
+            case LEFT:
                 if (event.isLeftClick() && !event.isShiftClick()) {
                     castSkill(event, skill);
                 }
                 break;
-            case RIGHT_CLICK:
+            case RIGHT:
                 if (event.isRightClick() && !event.isShiftClick()) {
                     castSkill(event, skill);
                 }
                 break;
-            case SHIFT_LEFT_CLICK:
+            case SHIFT_LEFT:
                 if (event.isShiftClick() && event.isLeftClick()) {
                     castSkill(event, skill);
                 }
                 break;
-            case SHIFT_RIGHT_CLICK:
+            case SHIFT_RIGHT:
                 if (event.isShiftClick() && event.isRightClick()) {
                     castSkill(event, skill);
                 }
                 break;
-            case MIDDLE_CLICK:
+            case MIDDLE:
                 if (isMiddleClick) {
-                    castSkill(event, skill);
-                }
-                break;
-            case SHIFT_MIDDLE_CLICK:
-                if (event.isShiftClick() && isMiddleClick) {
+                    if (event.isShiftClick()) {
+                        castSkill(event, skill);
+                        break;
+                    }
                     castSkill(event, skill);
                 }
                 break;
@@ -276,7 +274,7 @@ public class BukkitInventoryEvents implements Listener {
                     castSkill(event, skill);
                 }
                 break;
-            case HOTBAR_SWAP:
+            case NUMBER_KEY:
                 if (isHotbarSwap) {
                     castSkill(event, skill);
                 }
@@ -285,21 +283,21 @@ public class BukkitInventoryEvents implements Listener {
     }
 
     private void checkDragType(InventoryDragEvent event, MythicInventory inventory, int slot) {
-        HashMap<MIClickType, List<String>> clickTypesMap = inventory.getClickTypes(slot);
+        HashMap<ClickType, List<String>> clickTypesMap = inventory.getClickTypes(slot);
         if (clickTypesMap == null) return;
 
-        Set<MIClickType> clickTypes = clickTypesMap.keySet();
-        for (MIClickType clickType : clickTypes) {
+        Set<ClickType> clickTypes = clickTypesMap.keySet();
+        for (ClickType clickType : clickTypes) {
             List<String> skills = inventory.getClickSkills(slot, clickType);
             if (skills == null) continue;
             for (String skill : skills) {
                 switch (clickType) {
-                    case LEFT_CLICK:
+                    case LEFT:
                         if (event.getType().equals(DragType.SINGLE)) {
                             castSkill(event, skill);
                         }
                         break;
-                    case RIGHT_CLICK:
+                    case RIGHT:
                         if (event.getType().equals(DragType.EVEN)) {
                             castSkill(event, skill);
                         }
