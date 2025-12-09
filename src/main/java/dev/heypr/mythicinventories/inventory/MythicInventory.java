@@ -2,7 +2,6 @@ package dev.heypr.mythicinventories.inventory;
 
 import dev.heypr.mythicinventories.MythicInventories;
 import net.kyori.adventure.text.Component;
-import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
@@ -13,7 +12,7 @@ import java.util.*;
 
 public class MythicInventory implements InventoryHolder {
 
-    private final HashMap<Integer, HashMap<ClickType, List<String>>> clickSkills = new HashMap<>();
+    private final HashMap<Integer, HashMap<MIClickType, List<String>>> clickSkills = new HashMap<>();
     private final HashMap<Integer, ItemStack> interactableItems = new HashMap<>();
     private final Set<Integer> trinketSlots = new HashSet<>();
     private final Set<Integer> savedItems = new HashSet<>();
@@ -180,7 +179,7 @@ public class MythicInventory implements InventoryHolder {
      * @return The click skill for the inventory.
      */
     @Nullable
-    public HashMap<ClickType, List<String>> getClickTypes(int slot) {
+    public HashMap<MIClickType, List<String>> getClickTypes(int slot) {
         return clickSkills.get(slot);
     }
 
@@ -192,7 +191,7 @@ public class MythicInventory implements InventoryHolder {
      * @return The click skill for the inventory.
      */
     @Nullable
-    public List<String> getClickSkills(int slot, ClickType clickType) {
+    public List<String> getClickSkills(int slot, MIClickType clickType) {
         return clickSkills.get(slot).get(clickType);
     }
 
@@ -202,7 +201,7 @@ public class MythicInventory implements InventoryHolder {
      * @param slot   The slot to add the skills to.
      * @param skills The skills to add to the click type.
      */
-    public void addClickSkills(int slot, HashMap<ClickType, List<String>> skills) {
+    public void addClickSkills(int slot, HashMap<MIClickType, List<String>> skills) {
         clickSkills.put(slot, skills);
     }
 
@@ -212,8 +211,8 @@ public class MythicInventory implements InventoryHolder {
      * @param slot      The slot to listen for.
      * @param clickType The click type to listen to.
      */
-    public void addClick(int slot, ClickType clickType) {
-        HashMap<ClickType, List<String>> empty = new HashMap<>();
+    public void addClick(int slot, MIClickType clickType) {
+        HashMap<MIClickType, List<String>> empty = new HashMap<>();
         empty.put(clickType, null);
         clickSkills.put(slot, empty);
     }
@@ -225,8 +224,8 @@ public class MythicInventory implements InventoryHolder {
      * @param clickType The click type to add the skill to.
      * @param skills    The skills to add to the click type.
      */
-    public void addClickSkills(int slot, ClickType clickType, List<String> skills) {
-        HashMap<ClickType, List<String>> click = new HashMap<>();
+    public void addClickSkills(int slot, MIClickType clickType, List<String> skills) {
+        HashMap<MIClickType, List<String>> click = new HashMap<>();
         click.put(clickType, skills);
         clickSkills.put(slot, click);
     }
@@ -238,8 +237,8 @@ public class MythicInventory implements InventoryHolder {
      * @param clickType The click type to add the skill to.
      * @param skill     The skill to add to the click type.
      */
-    public void addClickSkill(int slot, ClickType clickType, String skill) {
-        HashMap<ClickType, List<String>> clickMap = clickSkills.get(slot);
+    public void addClickSkill(int slot, MIClickType clickType, String skill) {
+        HashMap<MIClickType, List<String>> clickMap = clickSkills.get(slot);
         if (clickMap == null) {
             clickMap = new HashMap<>();
         }

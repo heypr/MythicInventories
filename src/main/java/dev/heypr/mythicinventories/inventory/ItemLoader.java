@@ -6,7 +6,6 @@ import io.lumine.mythic.api.config.MythicConfig;
 import io.lumine.mythic.bukkit.BukkitAdapter;
 import io.lumine.mythic.core.items.MythicItem;
 import org.bukkit.Material;
-import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -455,7 +454,7 @@ public class ItemLoader {
             return;
         }
 
-        for (ClickType clickType : ClickType.values()) {
+        for (MIClickType clickType : MIClickType.values()) {
             String clickTypeKey = clickType.name().toLowerCase();
             if (checkValue(clickTypeKey)) {
                 Object clickTypeValue = itemData.get(clickTypeKey);
