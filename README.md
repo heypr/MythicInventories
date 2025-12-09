@@ -111,13 +111,14 @@ It is `false` by default, and is optional.
 
 ---
 The following are the varying click types that you can have MythicInventories listen for to run a skill:
-  - `left`
-  - `right`
-  - `shift_left`
-  - `shift_right`
-  - `middle`
+  - `left_click`
+  - `right_click`
+  - `shift_left_click`
+  - `shift_right_click`
+  - `middle_click`
+  - `shift_middle_click`
   - `drop`
-  - `number_key`
+  - `hotbar_swap`
 
 Each item can have multiple click types, each click type can have multiple skills, and each skill is limited only by what you can do with MythicMobs skills.
 See the above example inventory for a basic layout of how to set up a skill.
