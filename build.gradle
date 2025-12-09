@@ -2,8 +2,8 @@ plugins {
     id 'java'
 }
 
-group = 'me.hyper'
-version = '0.8.0-b' + buildNumber() + "-" + buildBranch()
+group = 'dev.heypr'
+version = '0.8.1-b' + buildNumber() + "-" + buildBranch()
 
 static def buildNumber() {
     System.getenv("BUILD_NUMBER") ?: "UNKNOWN"

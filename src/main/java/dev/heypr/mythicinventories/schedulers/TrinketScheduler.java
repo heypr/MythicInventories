@@ -1,8 +1,8 @@
-package dev.heypr.mythicinventories.util;
+package dev.heypr.mythicinventories.schedulers;
 
 import dev.heypr.mythicinventories.MythicInventories;
-import dev.heypr.mythicinventories.inventories.MythicInventory;
-import dev.heypr.mythicinventories.inventories.MythicInventory.TrinketConfig;
+import dev.heypr.mythicinventories.inventory.MythicInventory;
+import dev.heypr.mythicinventories.inventory.MythicInventory.TrinketConfig;
 import io.lumine.mythic.api.skills.Skill;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -25,7 +25,7 @@ public class TrinketScheduler {
     public void startTrinketSkillTask(Player player, int slot, TrinketConfig config, ItemStack trinket, MythicInventory inventory) {
         stopTrinketSkillTask(player, slot);
 
-        if (!plugin.isMythicMobsEnabled()) return;
+        if (!plugin.getMythicManager().isMythicMobsEnabled()) return;
 
         int interval;
         try {
@@ -38,7 +38,7 @@ public class TrinketScheduler {
 
         String keyStr = config.skill();
         UUID skillUUID = UUID.nameUUIDFromBytes(keyStr.getBytes(StandardCharsets.UTF_8));
-        Skill skill = plugin.getFromTrinketSkillCache(skillUUID);
+        Skill skill = plugin.getCacheManager().getTrinketSkill(skillUUID);
         if (skill == null) {
             return;
         }

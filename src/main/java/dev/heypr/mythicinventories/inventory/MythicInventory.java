@@ -1,7 +1,6 @@
-package dev.heypr.mythicinventories.inventories;
+package dev.heypr.mythicinventories.inventory;
 
 import dev.heypr.mythicinventories.MythicInventories;
-import dev.heypr.mythicinventories.util.MIClickType;
 import net.kyori.adventure.text.Component;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
@@ -49,7 +48,7 @@ public class MythicInventory implements InventoryHolder {
      * @param internalName The internal name of the inventory.
      */
     public MythicInventory(MythicInventories plugin, String internalName) {
-        this.inventory = plugin.getInventories().get(internalName).getInventory();
+        this.inventory = plugin.getInventoryManager().getInventories().get(internalName).getInventory();
     }
 
     /**

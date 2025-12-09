@@ -1,8 +1,8 @@
-package dev.heypr.mythicinventories.util;
+package dev.heypr.mythicinventories.schedulers;
 
 import dev.heypr.mythicinventories.MythicInventories;
-import dev.heypr.mythicinventories.inventories.MythicInventory;
-import dev.heypr.mythicinventories.inventories.MythicInventory.TrinketConfig;
+import dev.heypr.mythicinventories.inventory.MythicInventory;
+import dev.heypr.mythicinventories.inventory.MythicInventory.TrinketConfig;
 import io.lumine.mythic.api.mobs.GenericCaster;
 import io.lumine.mythic.api.skills.Skill;
 import io.lumine.mythic.api.skills.SkillMetadata;
@@ -82,7 +82,7 @@ public class TrinketSkillTask extends BukkitRunnable {
         }
 
         GenericCaster caster = new GenericCaster(BukkitAdapter.adapt(player));
-        SkillMetadata skillMeta = plugin.getMythicInst().getSkillManager().getEventBus().buildSkillMetadata(SkillTriggers.API, caster, BukkitAdapter.adapt(player), BukkitAdapter.adapt(player.getLocation()), true);
+        SkillMetadata skillMeta = plugin.getMythicManager().getMythicInst().getSkillManager().getEventBus().buildSkillMetadata(SkillTriggers.API, caster, BukkitAdapter.adapt(player), BukkitAdapter.adapt(player.getLocation()), true);
 
         if (cachedSkill.isUsable(skillMeta)) {
             cachedSkill.execute(skillMeta);
@@ -110,7 +110,7 @@ public class TrinketSkillTask extends BukkitRunnable {
         }
 
         if (initialConfigUUID != null) {
-            TrinketConfig config = plugin.getTrinketConfigFromCache(initialConfigUUID);
+            TrinketConfig config = plugin.getCacheManager().getTrinketConfig(initialConfigUUID);
             if (config != null) {
                 try {
                     int initialUses = Integer.parseInt(config.uses());

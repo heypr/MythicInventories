@@ -1,8 +1,7 @@
-package dev.heypr.mythicinventories.inventories;
+package dev.heypr.mythicinventories.inventory;
 
 import dev.heypr.mythicinventories.MythicInventories;
 import dev.heypr.mythicinventories.util.ComponentSerializer;
-import dev.heypr.mythicinventories.util.MIClickType;
 import io.lumine.mythic.api.config.MythicConfig;
 import io.lumine.mythic.bukkit.BukkitAdapter;
 import io.lumine.mythic.core.items.MythicItem;
@@ -19,14 +18,14 @@ import java.util.Optional;
 import java.util.UUID;
 
 @SuppressWarnings("UnstableApiUsage")
-public class ItemLoaderUtils {
+public class ItemLoader {
 
     private final MythicInventories plugin;
     private final String inventoryId;
     private final Map<?, ?> itemData;
     private final int inventorySize;
 
-    public ItemLoaderUtils(MythicInventories plugin, String inventoryId, Map<?, ?> itemData, int inventorySize) {
+    public ItemLoader(MythicInventories plugin, String inventoryId, Map<?, ?> itemData, int inventorySize) {
         this.plugin = plugin;
         this.inventoryId = inventoryId;
         this.itemData = itemData;
@@ -95,12 +94,12 @@ public class ItemLoaderUtils {
         String type = itemData.get("type").toString();
 
         if (type.startsWith("mythic:")) {
-            if (!plugin.isMythicMobsEnabled()) {
+            if (!plugin.getMythicManager().isMythicMobsEnabled()) {
                 plugin.getLogger().severe("MythicMobs is not enabled! Cannot set item type to: " + type);
                 return null;
             }
             String mythicId = type.replace("mythic:", "");
-            Optional<MythicItem> item = plugin.getMythicInst().getItemManager().getItem(mythicId);
+            Optional<MythicItem> item = plugin.getMythicManager().getMythicInst().getItemManager().getItem(mythicId);
 
             if (item.isPresent()) {
                 MythicConfig mmConfig = item.get().getConfig().getNestedConfig("Trinket");
@@ -451,7 +450,7 @@ public class ItemLoaderUtils {
     }
 
     public void handleClickTypes(MythicInventory inventory, int slot) {
-        if (!plugin.isMythicMobsEnabled()) {
+        if (!plugin.getMythicManager().isMythicMobsEnabled()) {
             return;
         }
 
@@ -467,7 +466,7 @@ public class ItemLoaderUtils {
                             .forEach(skillName -> {
                                 inventory.addClickSkill(slot, clickType, skillName);
                                 UUID key = UUID.nameUUIDFromBytes(skillName.getBytes(StandardCharsets.UTF_8));
-                                plugin.addToItemSkillCache(key, skillName);
+                                plugin.getCacheManager().cacheItemSkill(key, skillName);
                             });
                 }
                 else {
@@ -487,13 +486,8 @@ public class ItemLoaderUtils {
 
     public void handleShouldSave(int slot, MythicInventory inventory) {
         if (checkValue("save")) {
-            if (plugin.isPaperServer()) {
-                if (getBoolean("save")) {
-                    inventory.addSavedItem(slot);
-                }
-            }
-            else {
-                plugin.getLogger().severe("Due to the way that items are internally saved, the 'save' option is only available on Paper servers!");
+            if (getBoolean("save")) {
+                inventory.addSavedItem(slot);
             }
         }
     }
