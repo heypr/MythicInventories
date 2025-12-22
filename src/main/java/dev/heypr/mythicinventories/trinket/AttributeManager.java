@@ -1,4 +1,4 @@
-package dev.heypr.mythicinventories.util;
+package dev.heypr.mythicinventories.trinket;
 
 import dev.heypr.mythicinventories.MythicInventories;
 import io.lumine.mythic.api.config.MythicConfig;
@@ -53,7 +53,7 @@ public class AttributeManager {
     }
 
     public void applyAttributes(Player player, int slot, ItemStack item) {
-        if (item == null || item.getType().isAir() || !plugin.isMythicMobsEnabled()) return;
+        if (item == null || item.getType().isAir() || !plugin.getMythicManager().isMythicMobsEnabled()) return;
 
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return;
@@ -61,7 +61,7 @@ public class AttributeManager {
         String mythicId = meta.getPersistentDataContainer().get(plugin.getMythicIdKey(), PersistentDataType.STRING);
         if (mythicId == null || mythicId.isEmpty()) return;
 
-        Optional<MythicItem> itemOptional = plugin.getMythicInst().getItemManager().getItem(mythicId);
+        Optional<MythicItem> itemOptional = plugin.getMythicManager().getMythicInst().getItemManager().getItem(mythicId);
         if (itemOptional.isEmpty()) return;
 
         MythicConfig mmConfig = itemOptional.get().getConfig().getNestedConfig("Trinket");

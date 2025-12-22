@@ -1,4 +1,4 @@
-package dev.heypr.mythicinventories.inventories;
+package dev.heypr.mythicinventories.inventory;
 
 import dev.heypr.mythicinventories.MythicInventories;
 import dev.heypr.mythicinventories.util.ComponentSerializer;
@@ -12,7 +12,6 @@ import org.yaml.snakeyaml.error.MarkedYAMLException;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
 
 public class InventoryCreator {
 
@@ -91,13 +90,13 @@ public class InventoryCreator {
                 plugin.getLogger().severe("Failed to load item in inventory \"" + inventoryId + "\"!");
             }
         }
-        plugin.addInventory(inventory, inventoryId);
+        plugin.getInventoryManager().addInventory(inventory, inventoryId);
         return true;
     }
 
     private boolean loadItem(Map<?, ?> itemData, MythicInventory inventory, int size, String inventoryId) {
         try {
-            ItemLoaderUtils utils = new ItemLoaderUtils(plugin, inventoryId, itemData, size);
+            ItemLoader utils = new ItemLoader(plugin, inventoryId, itemData, size);
 
             if (!utils.validateSlotAndFillItem()) {
                 return false;

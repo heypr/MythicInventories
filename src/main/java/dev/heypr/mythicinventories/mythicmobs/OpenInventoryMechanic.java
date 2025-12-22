@@ -1,7 +1,7 @@
 package dev.heypr.mythicinventories.mythicmobs;
 
 import dev.heypr.mythicinventories.MythicInventories;
-import dev.heypr.mythicinventories.inventories.MythicInventory;
+import dev.heypr.mythicinventories.inventory.MythicInventory;
 import io.lumine.mythic.api.adapters.AbstractEntity;
 import io.lumine.mythic.api.config.MythicLineConfig;
 import io.lumine.mythic.api.skills.ITargetedEntitySkill;
@@ -27,7 +27,7 @@ public class OpenInventoryMechanic implements ITargetedEntitySkill {
             return SkillResult.INVALID_CONFIG;
         }
 
-        if (!plugin.getInventories().containsKey(inventoryName)) {
+        if (!plugin.getInventoryManager().getInventories().containsKey(inventoryName)) {
             return SkillResult.ERROR;
         }
 
@@ -35,7 +35,7 @@ public class OpenInventoryMechanic implements ITargetedEntitySkill {
             return SkillResult.ERROR;
         }
 
-        MythicInventory mythicInventory = plugin.getInventories().get(inventoryName);
+        MythicInventory mythicInventory = plugin.getInventoryManager().getInventories().get(inventoryName);
 
         if (plugin.getInventorySerializer().getPlayerInventoryNames(target).contains(inventoryName)) {
             target.openInventory(plugin.getInventorySerializer().loadInventory(mythicInventory, target).getInventory());

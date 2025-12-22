@@ -1,7 +1,8 @@
 package dev.heypr.mythicinventories.commands;
 
 import dev.heypr.mythicinventories.MythicInventories;
-import dev.heypr.mythicinventories.inventories.MythicInventory;
+import dev.heypr.mythicinventories.inventory.InventoryManager;
+import dev.heypr.mythicinventories.inventory.MythicInventory;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -10,10 +11,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class OpenInventoryCommand implements CommandExecutor {
 
+    private final InventoryManager inventoryManager;
     private final MythicInventories plugin;
 
     public OpenInventoryCommand(MythicInventories plugin) {
         this.plugin = plugin;
+        this.inventoryManager = plugin.getInventoryManager();
     }
 
     @Override
@@ -29,7 +32,7 @@ public class OpenInventoryCommand implements CommandExecutor {
         }
 
         String inventoryName = args[0];
-        if (!plugin.getInventories().containsKey(inventoryName)) {
+        if (!inventoryManager.getInventories().containsKey(inventoryName)) {
             player.sendMessage("No such inventory: " + inventoryName);
             return true;
         }
@@ -39,7 +42,7 @@ public class OpenInventoryCommand implements CommandExecutor {
             return true;
         }
 
-        MythicInventory mythicInventory = plugin.getInventories().get(inventoryName);
+        MythicInventory mythicInventory = inventoryManager.getInventories().get(inventoryName);
         Player target = args.length > 1 ? plugin.getServer().getPlayer(args[1]) : player;
 
         if (target == null) {

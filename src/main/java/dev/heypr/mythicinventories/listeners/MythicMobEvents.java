@@ -1,7 +1,7 @@
-package dev.heypr.mythicinventories.events;
+package dev.heypr.mythicinventories.listeners;
 
 import dev.heypr.mythicinventories.MythicInventories;
-import dev.heypr.mythicinventories.inventories.MythicInventory;
+import dev.heypr.mythicinventories.inventory.MythicInventory;
 import dev.heypr.mythicinventories.mythicmobs.OpenInventoryMechanic;
 import io.lumine.mythic.api.config.MythicConfig;
 import io.lumine.mythic.bukkit.events.MythicMechanicLoadEvent;
@@ -62,7 +62,7 @@ public class MythicMobEvents implements Listener {
 
         MythicInventory.TrinketConfig finalConfig = new MythicInventory.TrinketConfig(skill, interval, uses, disappears);
         UUID cacheId = UUID.nameUUIDFromBytes(skill.getBytes(StandardCharsets.UTF_8));
-        plugin.addToTrinketConfigCache(cacheId, finalConfig);
+        plugin.getCacheManager().cacheTrinketConfig(cacheId, finalConfig);
 
         meta.getPersistentDataContainer().set(plugin.getTrinketCacheKey(), PersistentDataType.STRING, cacheId.toString());
 
