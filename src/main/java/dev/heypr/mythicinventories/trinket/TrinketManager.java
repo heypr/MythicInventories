@@ -21,21 +21,34 @@ public class TrinketManager {
         this.plugin = plugin;
     }
 
+    public Optional<ItemStack> getReplacementItem(String id) {
+        if (id == null || id.equalsIgnoreCase("NONE") || id.isEmpty()) {
+            return Optional.empty();
+        }
+        if (id.equalsIgnoreCase("AIR")) {
+            return Optional.of(new ItemStack(Material.AIR));
+        }
+        if (id.toLowerCase().startsWith("mythic:")) {
+            String mythicId = id.substring(7);
+            return Optional.ofNullable(plugin.getMythicManager().getMythicInst().getItemManager().getItemStack(mythicId));
+        }
+        Material material = Material.matchMaterial(id.toUpperCase());
+        if (material != null) {
+            return Optional.of(new ItemStack(material));
+        }
+        return Optional.empty();
+    }
+
     public MythicInventory.TrinketConfig getTrinketConfigFromItem(ItemStack item) {
         if (item == null || item.getType() == Material.AIR || item.getItemMeta() == null) return null;
-
         ItemMeta meta = item.getItemMeta();
-
         String cacheIdString = meta.getPersistentDataContainer().get(plugin.getTrinketCacheKey(), PersistentDataType.STRING);
 
         if (cacheIdString != null) {
             try {
                 UUID cacheId = UUID.fromString(cacheIdString);
                 MythicInventory.TrinketConfig cachedConfig = plugin.getCacheManager().getTrinketConfig(cacheId);
-
-                if (cachedConfig != null) {
-                    return cachedConfig;
-                }
+                if (cachedConfig != null) return cachedConfig;
             }
             catch (IllegalArgumentException e) {
                 plugin.getLogger().severe("Corrupted Trinket Cache UUID found on item: " + cacheIdString);
@@ -49,40 +62,27 @@ public class TrinketManager {
         if (mythicId == null || mythicId.isEmpty()) return null;
 
         UUID newCacheKey = UUID.nameUUIDFromBytes(mythicId.getBytes(StandardCharsets.UTF_8));
-
         Optional<MythicItem> itemOptional = plugin.getMythicManager().getMythicInst().getItemManager().getItem(mythicId);
-        if (itemOptional.isEmpty()) {
-            return null;
-        }
+        if (itemOptional.isEmpty()) return null;
 
         MythicConfig mmConfig = itemOptional.get().getConfig().getNestedConfig("Trinket");
-
-        if (mmConfig == null) {
-            return null;
-        }
+        if (mmConfig == null) return null;
 
         String skill = mmConfig.getString("skill", "NO_SKILL");
-        String interval = mmConfig.getString("interval", "100");
-        String uses = mmConfig.getString("uses", "-1");
+        String skillInterval = mmConfig.getString("skill_interval", "100");
+        String skillUses = mmConfig.getString("skill_uses", "-1");
+        String skillRunOut = mmConfig.getString("skill_run_out_item", null);
+        String attributeInterval = mmConfig.getString("attribute_interval", "20");
+        String attributeUses = mmConfig.getString("attribute_uses", "-1");
+        String attrRunOut = mmConfig.getString("attribute_run_out_item", null);
         boolean disappears = mmConfig.getBoolean("initial_item_disappears", false);
         boolean hasAttributes = mmConfig.isConfigurationSection("attributes");
 
-        if (skill.equalsIgnoreCase("NO_SKILL") && !hasAttributes) {
-            return null;
-        }
+        if (skill.equalsIgnoreCase("NO_SKILL") && !hasAttributes) return null;
 
-        if (!skill.equalsIgnoreCase("NO_SKILL")) {
-            try {
-                if (Integer.parseInt(interval) <= 0) {
-                    return null;
-                }
-            }
-            catch (NumberFormatException e) {
-                return null;
-            }
-        }
-
-        MythicInventory.TrinketConfig finalConfig = new MythicInventory.TrinketConfig(skill, interval, uses, disappears);
+        MythicInventory.TrinketConfig finalConfig = new MythicInventory.TrinketConfig(
+                skill, skillInterval, skillUses, skillRunOut,
+                attributeInterval, attributeUses, attrRunOut, disappears);
         plugin.getCacheManager().cacheTrinketConfig(newCacheKey, finalConfig);
         return finalConfig;
     }

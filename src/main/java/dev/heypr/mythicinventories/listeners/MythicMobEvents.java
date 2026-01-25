@@ -35,35 +35,45 @@ public class MythicMobEvents implements Listener {
     public void onItemGenEvent(MythicMobItemGenerateEvent event) {
         MythicItem mythicItem = event.getItem();
         ItemStack itemStack = event.getItemStack();
-
         if (itemStack == null || mythicItem == null) return;
 
         ItemMeta meta = itemStack.getItemMeta();
         if (meta == null) return;
 
+        String mythicId = mythicItem.getInternalName();
+        meta.getPersistentDataContainer().set(plugin.getMythicIdKey(), PersistentDataType.STRING, mythicId);
+
         if (!event.getItem().getConfig().contains("Trinket")) {
-            String mythicId = mythicItem.getInternalName();
-            meta.getPersistentDataContainer().set(plugin.getMythicIdKey(), PersistentDataType.STRING, mythicId);
             itemStack.setItemMeta(meta);
-            event.setItemStack(itemStack);
             return;
         }
-
-        String mythicId = mythicItem.getInternalName();
-
-        meta.getPersistentDataContainer().set(plugin.getMythicIdKey(), PersistentDataType.STRING, mythicId);
 
         MythicConfig mmConfig = event.getItem().getConfig().getNestedConfig("Trinket");
 
         String skill = mmConfig.getString("skill", "NO_SKILL");
-        String interval = mmConfig.getString("interval", "100");
-        String uses = mmConfig.getString("uses", "-1");
+        String skillInterval = mmConfig.getString("skill_interval", "20");
+        String skillUses = mmConfig.getString("skill_uses", "-1");
+        String skillRunOut = mmConfig.getString("skill_run_out_item", null);
+
+        String attributeInterval = mmConfig.getString("attribute_interval", "20");
+        String attributeUses = mmConfig.getString("attribute_uses", "-1");
+        String attrRunOut = mmConfig.getString("attribute_run_out_item", null);
+
         boolean disappears = mmConfig.getBoolean("initial_item_disappears", false);
 
-        MythicInventory.TrinketConfig finalConfig = new MythicInventory.TrinketConfig(skill, interval, uses, disappears);
-        UUID cacheId = UUID.nameUUIDFromBytes(skill.getBytes(StandardCharsets.UTF_8));
-        plugin.getCacheManager().cacheTrinketConfig(cacheId, finalConfig);
+        MythicInventory.TrinketConfig finalConfig = new MythicInventory.TrinketConfig(
+                skill,
+                skillInterval,
+                skillUses,
+                skillRunOut,
+                attributeInterval,
+                attributeUses,
+                attrRunOut,
+                disappears
+        );
 
+        UUID cacheId = UUID.nameUUIDFromBytes((mythicId + "_config").getBytes(StandardCharsets.UTF_8));
+        plugin.getCacheManager().cacheTrinketConfig(cacheId, finalConfig);
         meta.getPersistentDataContainer().set(plugin.getTrinketCacheKey(), PersistentDataType.STRING, cacheId.toString());
 
         itemStack.setItemMeta(meta);

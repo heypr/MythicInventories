@@ -32,6 +32,8 @@ repositories {
 dependencies {
     compileOnly "io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT"
     compileOnly 'io.lumine:Mythic-Dist:5.11.0'
+    implementation 'io.lumine:MythicCrucible-Dist:2.4.0-SNAPSHOT'
+
     implementation "net.kyori:adventure-text-minimessage:4.17.0"
     implementation "org.bstats:bstats-bukkit:3.0.2"
 }

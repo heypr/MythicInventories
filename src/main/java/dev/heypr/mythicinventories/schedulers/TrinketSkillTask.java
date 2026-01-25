@@ -15,8 +15,6 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import java.util.UUID;
-
 public class TrinketSkillTask extends BukkitRunnable {
 
     private final MythicInventories plugin;
@@ -24,104 +22,88 @@ public class TrinketSkillTask extends BukkitRunnable {
     private final Skill cachedSkill;
     private final int slot;
     private final MythicInventory inventory;
+    private final TrinketConfig config;
     private final boolean infiniteUses;
-    private final UUID initialConfigUUID;
+    private final NamespacedKey usesKey;
 
     public TrinketSkillTask(MythicInventories plugin, Player player, int slot, TrinketConfig config, Skill cachedSkill, MythicInventory inventory) {
         this.plugin = plugin;
         this.player = player;
         this.slot = slot;
+        this.config = config;
         this.cachedSkill = cachedSkill;
         this.inventory = inventory;
-        this.infiniteUses = config.uses().equals("-1") || config.uses().equalsIgnoreCase("infinite");
-
-        ItemStack currentItem = inventory.getInventory().getItem(slot);
-        if (currentItem != null && currentItem.hasItemMeta()) {
-            String idString = currentItem.getItemMeta().getPersistentDataContainer().get(plugin.getTrinketCacheKey(), PersistentDataType.STRING);
-            this.initialConfigUUID = idString != null ? UUID.fromString(idString) : null;
-        }
-        else {
-            this.initialConfigUUID = null;
-        }
+        this.infiniteUses = config.skillUses().equals("-1") || config.skillUses().equalsIgnoreCase("infinite");
+        this.usesKey = new NamespacedKey(plugin, "trinket_remaining_uses");
     }
 
     @Override
     public void run() {
-        if (!player.isOnline()) {
-            plugin.getTrinketScheduler().stopTrinketSkillTask(player, slot);
+        if (!player.isOnline() || !inventory.isTrinketSlot(slot)) {
+            cleanup();
             return;
         }
 
-        if (!inventory.isTrinketSlot(slot)) {
-            plugin.getLogger().warning("Trinket slot " + slot + " in inventory " + inventory.getInternalName() + " was removed while skill was running. Cleaning up effects for player " + player.getName());
-
-            plugin.getTrinketScheduler().stopTrinketSkillTask(player, slot);
-            plugin.getAttributeManager().removeAttributes(player, slot);
-            plugin.getInventorySerializer().saveInventory(inventory, player);
+        ItemStack item = inventory.getInventory().getItem(slot);
+        if (item == null || item.getType().isAir() || !item.hasItemMeta()) {
+            cleanup();
             return;
         }
 
-        ItemStack trinketItem = inventory.getInventory().getItem(slot);
-        if (trinketItem == null || trinketItem.getType().isAir() || !trinketItem.hasItemMeta()) {
-            plugin.getTrinketScheduler().stopTrinketSkillTask(player, slot);
-            return;
-        }
+        if (!infiniteUses) {
+            ItemMeta meta = item.getItemMeta();
 
-        ItemMeta meta = trinketItem.getItemMeta();
+            if (!meta.getPersistentDataContainer().has(usesKey)) {
+                try {
+                    int initial = Integer.parseInt(config.skillUses());
+                    meta.getPersistentDataContainer().set(usesKey, PersistentDataType.INTEGER, initial);
+                    item.setItemMeta(meta);
+                    inventory.getInventory().setItem(slot, item);
+                }
+                catch (Exception e) {
+                    handleExhaustion();
+                    return;
+                }
+            }
 
-        int remainingUses = infiniteUses ? -1 : getUsesFromPDC(meta);
+            int remaining = meta.getPersistentDataContainer().getOrDefault(usesKey, PersistentDataType.INTEGER, 0);
 
-        if (remainingUses == 0) {
-            plugin.getTrinketScheduler().stopTrinketSkillTask(player, slot);
-            plugin.getInventorySerializer().saveInventory(inventory, player);
-            return;
-        }
+            if (remaining <= 0) {
+                handleExhaustion();
+                return;
+            }
 
-        if (remainingUses != -1) {
-            remainingUses--;
-        }
+            GenericCaster caster = new GenericCaster(BukkitAdapter.adapt(player));
+            SkillMetadata skillMeta = plugin.getMythicManager().getMythicInst().getSkillManager().getEventBus()
+                    .buildSkillMetadata(SkillTriggers.API, caster, BukkitAdapter.adapt(player), BukkitAdapter.adapt(player.getLocation()), true);
 
-        GenericCaster caster = new GenericCaster(BukkitAdapter.adapt(player));
-        SkillMetadata skillMeta = plugin.getMythicManager().getMythicInst().getSkillManager().getEventBus().buildSkillMetadata(SkillTriggers.API, caster, BukkitAdapter.adapt(player), BukkitAdapter.adapt(player.getLocation()), true);
-
-        if (cachedSkill.isUsable(skillMeta)) {
-            cachedSkill.execute(skillMeta);
-            if (!infiniteUses) {
-                NamespacedKey usesKey = new NamespacedKey(plugin, "trinket_remaining_uses");
-                meta.getPersistentDataContainer().set(usesKey, PersistentDataType.INTEGER, remainingUses);
-                trinketItem.setItemMeta(meta);
-
-                inventory.getInventory().setItem(slot, trinketItem);
-                plugin.getInventorySerializer().saveInventory(inventory, player);
+            if (cachedSkill.isUsable(skillMeta)) {
+                cachedSkill.execute(skillMeta);
+                remaining--;
+                meta.getPersistentDataContainer().set(usesKey, PersistentDataType.INTEGER, remaining);
+                item.setItemMeta(meta);
+                inventory.getInventory().setItem(slot, item);
+                if (remaining <= 0) handleExhaustion();
             }
         }
+        else {
+            GenericCaster caster = new GenericCaster(BukkitAdapter.adapt(player));
+            SkillMetadata skillMeta = plugin.getMythicManager().getMythicInst().getSkillManager().getEventBus()
+                    .buildSkillMetadata(SkillTriggers.API, caster, BukkitAdapter.adapt(player), BukkitAdapter.adapt(player.getLocation()), true);
 
-        if (remainingUses == 0) {
-            plugin.getTrinketScheduler().stopTrinketSkillTask(player, slot);
-            plugin.getInventorySerializer().saveInventory(inventory, player);
+            if (cachedSkill.isUsable(skillMeta)) {
+                cachedSkill.execute(skillMeta);
+            }
         }
     }
 
-    private int getUsesFromPDC(ItemMeta meta) {
-        NamespacedKey usesKey = new NamespacedKey(plugin, "trinket_remaining_uses");
+    private void handleExhaustion() {
+        plugin.getTrinketManager().getReplacementItem(config.skillRunOutItem()).ifPresent(rep -> inventory.getInventory().setItem(slot, rep));
+        cleanup();
+        plugin.getInventorySerializer().saveInventory(inventory, player);
+    }
 
-        if (meta.getPersistentDataContainer().has(usesKey)) {
-            return (meta.getPersistentDataContainer().getOrDefault(usesKey, PersistentDataType.INTEGER, 0));
-        }
-
-        if (initialConfigUUID != null) {
-            TrinketConfig config = plugin.getCacheManager().getTrinketConfig(initialConfigUUID);
-            if (config != null) {
-                try {
-                    int initialUses = Integer.parseInt(config.uses());
-                    meta.getPersistentDataContainer().set(usesKey, PersistentDataType.INTEGER, initialUses);
-                    return initialUses;
-                }
-                catch (NumberFormatException e) {
-                    return 0;
-                }
-            }
-        }
-        return 0;
+    private void cleanup() {
+        plugin.getTrinketScheduler().stopTrinketSkillTask(player, slot);
     }
 }

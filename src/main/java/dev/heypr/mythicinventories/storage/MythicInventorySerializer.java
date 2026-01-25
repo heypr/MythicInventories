@@ -148,19 +148,18 @@ public class MythicInventorySerializer {
      * @param player The player to load the inventory for.
      */
     public MythicInventory loadInventory(MythicInventory inventory, Player player) {
-        File file = new File(plugin.getDataFolder(), "playerdata/" + player.getUniqueId() + "/" + inventory.getInternalName() + ".json");
-        if (!file.exists()) {
-            plugin.getLogger().warning("Inventory file not found: " + file.getName());
-            return null;
-        }
+        String name = inventory.getInternalName();
 
-        HashMap<Integer, ItemStack> loadedItems = deserializeInventoryFromJson(file);
-        MythicInventory loadedInventory = new MythicInventory(plugin, inventory.getInternalName());
+        MythicInventory playerInv = new MythicInventory(plugin, name);
 
-        for (Map.Entry<Integer, ItemStack> entry : loadedItems.entrySet()) {
-            loadedInventory.setItem(entry.getKey(), entry.getValue());
+        File file = new File(plugin.getDataFolder(), "playerdata/" + player.getUniqueId() + "/" + name + ".json");
+        if (file.exists()) {
+            HashMap<Integer, ItemStack> loadedItems = deserializeInventoryFromJson(file);
+            for (Map.Entry<Integer, ItemStack> entry : loadedItems.entrySet()) {
+                playerInv.setItem(entry.getKey(), entry.getValue());
+            }
         }
-        return loadedInventory;
+        return playerInv;
     }
 
     /**

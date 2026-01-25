@@ -19,15 +19,19 @@ public class MythicInventory implements InventoryHolder {
     private final Set<Integer> savedItems = new HashSet<>();
     private final Inventory inventory;
     private String internalName;
+    private Component title;
+    private int size;
 
     /**
      * Configuration data for a specialized trinket slot.
      * @param skill The MythicMobs skill name to execute.
-     * @param interval The execution interval in ticks, due to inconsistencies on mythic's side of things, this is handled incorrectly when called via the getInt method.
-     * @param uses The maximum number of skill uses (-1 for infinite).
+     * @param skillInterval The execution interval in ticks for the skill, due to inconsistencies on mythic's side of things, this is handled incorrectly when called via the getInt method.
+     * @param skillUses The maximum number of skill uses (-1 for infinite).
+     * @param attributeInterval The interval in ticks between use decrement.
+     * @param attributeUses The maximum number of attribute uses (-1 for infinite)
      * @param initialItemDisappears True if the configured placeholder item should be removed when a trinket is placed.
      */
-    public record TrinketConfig(String skill, String interval, String uses, boolean initialItemDisappears) { }
+    public record TrinketConfig(String skill, String skillInterval, String skillUses, String skillRunOutItem, String attributeInterval, String attributeUses, String attributeRunOutItem, boolean initialItemDisappears) { }
 
     /**
      * Constructor for creating a new inventory.
@@ -38,6 +42,8 @@ public class MythicInventory implements InventoryHolder {
      */
     public MythicInventory(MythicInventories plugin, int size, Component title) {
         this.inventory = plugin.getServer().createInventory(this, size, title);
+        this.title = title;
+        this.size = size;
     }
 
     /**
@@ -49,7 +55,47 @@ public class MythicInventory implements InventoryHolder {
      * @param internalName The internal name of the inventory.
      */
     public MythicInventory(MythicInventories plugin, String internalName) {
-        this.inventory = plugin.getInventoryManager().getInventories().get(internalName).getInventory();
+        this.internalName = internalName;
+
+        MythicInventory template = plugin.getInventoryManager().getInventories().get(internalName);
+
+        if (template != null) {
+            this.inventory = plugin.getServer().createInventory(this, template.getSize(), template.getTitle());
+
+            this.trinketSlots.addAll(template.trinketSlots);
+            this.savedItems.addAll(template.savedItems);
+            this.interactableItems.putAll(template.interactableItems);
+            this.clickSkills.putAll(template.clickSkills);
+
+            for (int i = 0; i < template.getInventory().getSize(); i++) {
+                ItemStack item = template.getInventory().getItem(i);
+                if (item != null) {
+                    this.inventory.setItem(i, item.clone());
+                }
+            }
+        }
+        else {
+            plugin.getLogger().severe("Could not find inventory template: " + internalName);
+            this.inventory = plugin.getServer().createInventory(this, 27, Component.text("Missing Inventory Template"));
+        }
+    }
+
+    /**
+     * Get the title of the inventory.
+     *
+     * @return The title of the inventory.
+     */
+    public Component getTitle() {
+        return title;
+    }
+
+    /**
+     * Get the size of the inventory.
+     *
+     * @return The size of the inventory.
+     */
+    public int getSize() {
+        return size;
     }
 
     /**

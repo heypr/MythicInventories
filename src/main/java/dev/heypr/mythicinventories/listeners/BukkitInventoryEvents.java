@@ -41,12 +41,14 @@ public class BukkitInventoryEvents implements Listener {
         ItemStack cursorItem = event.getCursor();
         ItemStack clickedItem = event.getCurrentItem();
 
-        if (event.getAction() == MOVE_TO_OTHER_INVENTORY) {
+        plugin.getLogger().info("[Debug] InventoryClickEvent: Action=" + event.getAction() + ", Slot=" + slot + ", Player=" + player.getName());
 
+        if (event.getAction() == MOVE_TO_OTHER_INVENTORY) {
             if (event.getClickedInventory().equals(player.getInventory())) {
                 ItemStack itemToMove = event.getCurrentItem();
                 if (itemToMove == null || itemToMove.getType().isAir()) return;
 
+                plugin.getLogger().info("[Debug] Shift-click detected from player inventory.");
                 TrinketConfig itemConfig = plugin.getTrinketManager().getTrinketConfigFromItem(itemToMove);
 
                 if (itemConfig != null) {
@@ -64,13 +66,17 @@ public class BukkitInventoryEvents implements Listener {
 
                     event.setCancelled(true);
                     if (targetSlot != -1) {
+                        plugin.getLogger().info("[Debug] Shift-click: Found target trinket slot " + targetSlot);
                         inventory.getInventory().setItem(targetSlot, itemToMove.clone());
                         event.setCurrentItem(new ItemStack(Material.AIR));
 
                         handleTrinketPlacement(event, inventory, itemConfig, player, targetSlot);
+                    } else {
+                        plugin.getLogger().info("[Debug] Shift-click: No empty trinket slots available.");
                     }
                 }
                 else {
+                    plugin.getLogger().info("[Debug] Shift-click: Item is not a valid trinket.");
                     event.setCancelled(true);
                     player.sendMessage("This item cannot be used as a trinket!");
                 }
@@ -78,6 +84,7 @@ public class BukkitInventoryEvents implements Listener {
             }
             else if (event.getClickedInventory().equals(inventory.getInventory())) {
                 if (!inventory.isTrinketSlot(slot) && !isInteractable(inventory, slot)) {
+                    plugin.getLogger().info("[Debug] Shift-click: Cancelled (Not a trinket or interactable slot).");
                     event.setCancelled(true);
                     return;
                 }
@@ -85,14 +92,16 @@ public class BukkitInventoryEvents implements Listener {
         }
 
         if (inventory.isTrinketSlot(slot)) {
-
+            plugin.getLogger().info("[Debug] Interacting with Trinket Slot: " + slot);
             if (cursorItem.getType() != Material.AIR && event.getClickedInventory().equals(inventory.getInventory())) {
                 TrinketConfig itemConfig = plugin.getTrinketManager().getTrinketConfigFromItem(cursorItem);
 
                 if (itemConfig != null) {
+                    plugin.getLogger().info("[Debug] Placing trinket from cursor into slot " + slot);
                     handleTrinketPlacement(event, inventory, itemConfig, player, slot);
                 }
                 else {
+                    plugin.getLogger().info("[Debug] Denied: Item on cursor is not a valid trinket.");
                     event.setCancelled(true);
                     player.sendMessage("This item cannot be used as a trinket!");
                 }
@@ -100,6 +109,7 @@ public class BukkitInventoryEvents implements Listener {
             }
             else if (clickedItem != null && clickedItem.getType() != Material.AIR && event.getClickedInventory().equals(inventory.getInventory())) {
                 if (inventory.getInteractableItems().containsKey(slot) && inventory.getInteractableItems().get(slot).isSimilar(clickedItem)) {
+                    plugin.getLogger().info("[Debug] Interacting with placeholder item in slot " + slot);
                     event.setCancelled(true);
                     checkClickType(event, inventory, slot);
                     return;
@@ -107,6 +117,7 @@ public class BukkitInventoryEvents implements Listener {
 
                 TrinketConfig itemConfig = plugin.getTrinketManager().getTrinketConfigFromItem(clickedItem);
                 if (itemConfig != null) {
+                    plugin.getLogger().info("[Debug] Removing trinket from slot " + slot);
                     handleTrinketRemoval(event, inventory, itemConfig, player, slot);
                     return;
                 }
@@ -115,6 +126,7 @@ public class BukkitInventoryEvents implements Listener {
 
         if (event.getCurrentItem() != null) {
             if (!hasInteractable(inventory) || !isInteractable(inventory, event.getRawSlot())) {
+                plugin.getLogger().info("[Debug] Non-trinket slot interaction. Cancelling and checking skills.");
                 event.setCancelled(true);
                 checkClickType(event, inventory, event.getRawSlot());
             }
@@ -123,11 +135,16 @@ public class BukkitInventoryEvents implements Listener {
 
     @EventHandler
     public void onDrag(InventoryDragEvent event) {
+        plugin.getLogger().info("[Debug] InventoryDragEvent detected.");
         if (!(event.getInventory().getHolder() instanceof MythicInventory inventory)) return;
         if (event.getCursor() == null) return;
 
         for (int slot : event.getRawSlots()) {
-            if (isInteractable(inventory, slot)) continue;
+            if (isInteractable(inventory, slot)) {
+                plugin.getLogger().info("[Debug] Drag in interactable slot " + slot + " allowed.");
+                continue;
+            }
+            plugin.getLogger().info("[Debug] Drag in restricted slot " + slot + " cancelled.");
             event.setCancelled(true);
             checkDragType(event, inventory, slot);
         }
@@ -136,10 +153,12 @@ public class BukkitInventoryEvents implements Listener {
     @EventHandler
     private void onClose(InventoryCloseEvent event) {
         if (!(event.getInventory().getHolder() instanceof MythicInventory inventory)) return;
+        plugin.getLogger().info("[Debug] Inventory closed by " + event.getPlayer().getName() + ". Saving inventory.");
         plugin.getInventorySerializer().saveInventory(inventory, (Player) event.getPlayer());
     }
 
     private void handleTrinketPlacement(InventoryClickEvent event, MythicInventory inventory, TrinketConfig config, Player player, int slot) {
+        plugin.getLogger().info("[Debug] handleTrinketPlacement: Slot=" + slot + ", Skill=" + config.skill());
         ItemStack trinketToPlace = event.getAction() == MOVE_TO_OTHER_INVENTORY ? inventory.getInventory().getItem(slot) : event.getCursor().clone();
 
         if (event.getAction() != MOVE_TO_OTHER_INVENTORY) {
@@ -153,42 +172,54 @@ public class BukkitInventoryEvents implements Listener {
             event.setCursor(new ItemStack(Material.AIR));
         }
 
-        if (trinketToPlace == null || trinketToPlace.getType().isAir()) return;
+        if (trinketToPlace == null || trinketToPlace.getType().isAir()) {
+            plugin.getLogger().warning("[Debug] Placement aborted: trinketToPlace is null or air.");
+            return;
+        }
 
         UUID configKey = UUID.nameUUIDFromBytes(config.skill().getBytes(StandardCharsets.UTF_8));
         ItemMeta meta = trinketToPlace.getItemMeta();
         if (meta != null) {
             meta.getPersistentDataContainer().set(plugin.getTrinketCacheKey(), PersistentDataType.STRING, configKey.toString());
             trinketToPlace.setItemMeta(meta);
+            plugin.getLogger().info("[Debug] Set PDC key on trinket: " + configKey);
         }
 
         inventory.getInventory().setItem(slot, trinketToPlace);
 
+        plugin.getLogger().info("[Debug] Requesting Attribute Application for slot " + slot);
         attributeManager.applyAttributes(player, slot, trinketToPlace);
 
         if (!config.skill().equals("NO_SKILL")) {
+            plugin.getLogger().info("[Debug] Skill recognized. Caching and starting tasks.");
             plugin.getCacheManager().cacheTrinketSkill(configKey, config.skill());
-            plugin.getTrinketScheduler().startTrinketSkillTask(player, slot, config, trinketToPlace, inventory);
+            plugin.getTrinketScheduler().startTrinketSkillTask(player, slot, config, inventory);
+            plugin.getTrinketScheduler().startTrinketAttributeTask(player, slot, config, inventory);
         }
     }
 
     private void handleTrinketRemoval(InventoryClickEvent event, MythicInventory inventory, TrinketConfig config, Player player, int slot) {
+        plugin.getLogger().info("[Debug] handleTrinketRemoval: Slot=" + slot);
         event.setCancelled(true);
         if (event.getClickedInventory() == null) return;
         ItemStack trinketToRemove = event.getCurrentItem();
 
+        plugin.getLogger().info("[Debug] Stopping tasks and removing attributes for slot " + slot);
         plugin.getTrinketScheduler().stopTrinketSkillTask(player, slot);
+        plugin.getTrinketScheduler().stopTrinketAttributeTask(player, slot);
         attributeManager.removeAttributes(player, slot);
 
         ItemMeta meta = trinketToRemove.getItemMeta();
         if (meta != null) {
             meta.getPersistentDataContainer().remove(plugin.getTrinketCacheKey());
             trinketToRemove.setItemMeta(meta);
+            plugin.getLogger().info("[Debug] Removed PDC key from trinket.");
         }
 
         ItemStack placeholder = inventory.getInteractableItems().get(slot);
 
         if (config.initialItemDisappears() && placeholder != null) {
+            plugin.getLogger().info("[Debug] Replacing trinket with placeholder item.");
             event.getClickedInventory().setItem(slot, placeholder);
         }
         else {
@@ -196,13 +227,16 @@ public class BukkitInventoryEvents implements Listener {
         }
 
         if (event.isShiftClick() || event.getAction() == MOVE_TO_OTHER_INVENTORY) {
+            plugin.getLogger().info("[Debug] Shift-click removal: Returning to inventory.");
             HashMap<Integer, ItemStack> remaining = player.getInventory().addItem(trinketToRemove);
             if (!remaining.isEmpty()) {
                 player.getWorld().dropItem(player.getLocation(), trinketToRemove);
                 player.sendMessage("Your inventory was full, the trinket was dropped on the ground!");
+                plugin.getLogger().info("[Debug] Inventory full: Dropped trinket on ground.");
             }
         }
         else {
+            plugin.getLogger().info("[Debug] Manual removal: Placing trinket on cursor.");
             event.setCursor(trinketToRemove);
         }
 
@@ -215,14 +249,21 @@ public class BukkitInventoryEvents implements Listener {
             return;
         }
         Player player = (Player) event.getWhoClicked();
+        plugin.getLogger().info("[Debug] Executing Mythic Skill: " + inputSkill + " for " + player.getName());
         plugin.getMythicManager().executeMythicSkill(player, inputSkill);
     }
 
     private void checkClickType(InventoryClickEvent event, MythicInventory inventory, int slot) {
         HashMap<ClickType, List<String>> clickTypes = inventory.getClickTypes(slot);
         if (clickTypes == null) return;
+<<<<<<< Updated upstream
         Set<ClickType> clickTypesSet = clickTypes.keySet();
         for (ClickType clickType : clickTypesSet) {
+=======
+        plugin.getLogger().info("[Debug] Checking click skills for slot " + slot + ". Found " + clickTypes.size() + " types.");
+        Set<MIClickType> clickTypesSet = clickTypes.keySet();
+        for (MIClickType clickType : clickTypesSet) {
+>>>>>>> Stashed changes
             List<String> skills = inventory.getClickSkills(slot, clickType);
             if (skills == null) continue;
             for (String skill : skills) {
@@ -267,10 +308,6 @@ public class BukkitInventoryEvents implements Listener {
                 break;
             case DROP:
                 if (isDrop) {
-                    if (event.isShiftClick()) {
-                        castSkill(event, skill);
-                        break;
-                    }
                     castSkill(event, skill);
                 }
                 break;
