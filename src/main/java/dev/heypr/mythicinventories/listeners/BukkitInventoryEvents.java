@@ -256,16 +256,14 @@ public class BukkitInventoryEvents implements Listener {
     private void checkClickType(InventoryClickEvent event, MythicInventory inventory, int slot) {
         HashMap<ClickType, List<String>> clickTypes = inventory.getClickTypes(slot);
         if (clickTypes == null) return;
-<<<<<<< Updated upstream
+
+        plugin.getLogger().info("[Debug] Checking click skills for slot " + slot + ". Found " + clickTypes.size() + " types.");
+
         Set<ClickType> clickTypesSet = clickTypes.keySet();
         for (ClickType clickType : clickTypesSet) {
-=======
-        plugin.getLogger().info("[Debug] Checking click skills for slot " + slot + ". Found " + clickTypes.size() + " types.");
-        Set<MIClickType> clickTypesSet = clickTypes.keySet();
-        for (MIClickType clickType : clickTypesSet) {
->>>>>>> Stashed changes
             List<String> skills = inventory.getClickSkills(slot, clickType);
             if (skills == null) continue;
+
             for (String skill : skills) {
                 performTypeChecks(clickType, event, skill, event.getAction());
             }
