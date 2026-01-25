@@ -10,11 +10,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class MythicInventory implements InventoryHolder {
 
-    private final HashMap<Integer, HashMap<ClickType, List<String>>> clickSkills = new HashMap<>();
-    private final HashMap<Integer, ItemStack> interactableItems = new HashMap<>();
+    private final ConcurrentHashMap<Integer, HashMap<ClickType, List<String>>> clickSkills = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Integer, ItemStack> interactableItems = new ConcurrentHashMap<>();
     private final Set<Integer> trinketSlots = new HashSet<>();
     private final Set<Integer> savedItems = new HashSet<>();
     private final Inventory inventory;
@@ -187,7 +188,7 @@ public class MythicInventory implements InventoryHolder {
      *
      * @return A map of all the interactable items in the inventory.
      */
-    public HashMap<Integer, ItemStack> getInteractableItems() {
+    public ConcurrentHashMap<Integer, ItemStack> getInteractableItems() {
         return interactableItems;
     }
 

@@ -4,12 +4,13 @@ import dev.heypr.mythicinventories.MythicInventories;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class InventoryManager {
 
     private final MythicInventories plugin;
-    private final HashMap<String, MythicInventory> inventories = new HashMap<>();
-    private final HashMap<UUID, List<MythicInventory>> activePlayerInventories = new HashMap<>();
+    private final ConcurrentHashMap<String, MythicInventory> inventories = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<UUID, List<MythicInventory>> activePlayerInventories = new ConcurrentHashMap<>();
 
     public InventoryManager(MythicInventories plugin) {
         this.plugin = plugin;
@@ -41,7 +42,7 @@ public class InventoryManager {
         activePlayerInventories.remove(uuid);
     }
 
-    public HashMap<String, MythicInventory> getInventories() {
+    public ConcurrentHashMap<String, MythicInventory> getInventories() {
         return inventories;
     }
 

@@ -71,7 +71,8 @@ public class BukkitInventoryEvents implements Listener {
                         event.setCurrentItem(new ItemStack(Material.AIR));
 
                         handleTrinketPlacement(event, inventory, itemConfig, player, targetSlot);
-                    } else {
+                    }
+                    else {
                         plugin.getLogger().info("[Debug] Shift-click: No empty trinket slots available.");
                     }
                 }
